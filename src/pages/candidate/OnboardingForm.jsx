@@ -1,72 +1,77 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import CandidateChrome from '../../components/CandidateChrome';
 import { Card, SectionSep } from '../../components/Card';
 import { Field, TextInput, SelectInput } from '../../components/Field';
 import Alert from '../../components/Alert';
 import ProgressSteps from '../../components/ProgressSteps';
-import { getRequest, parseMagicLinkToken, submitCandidateForm } from '../../lib/store';
+import {
+  getRequest,
+  getRequestByEmail,
+  parseMagicLinkToken,
+  submitCandidateForm,
+} from '../../lib/store';
+import { hasSupabase, supabase } from '../../lib/supabase';
 
 const RELATIONSHIPS = ['Spouse / Partner', 'Parent', 'Sibling', 'Friend', 'Other'];
 
+/**
+ * Outer component: resolves the active onboarding request (async), then
+ * mounts <FormView> with the resolved req. Keeping the hydration in a
+ * child keeps the form's useState() lazy initializer clean (no derived-
+ * from-prop setState in an effect).
+ */
 export default function OnboardingForm() {
   const [search] = useSearchParams();
-  const navigate = useNavigate();
   const token = search.get('token');
+  const requestIdParam = search.get('request_id');
+  const isPreview = search.get('preview') === '1';
 
-  // Resolve the request. Prefer token; fall back to sessionStorage (refresh survival);
-  // fall back to most recent pending request for preview navigation from chrome.
-  const req = useMemo(() => {
-    if (token) {
-      const parsed = parseMagicLinkToken(token);
-      if (parsed.ok) return getRequest(parsed.payload.rid);
-    }
-    const sid = sessionStorage.getItem('onboarding.activeRequest');
-    if (sid) return getRequest(sid);
-    return null;
-  }, [token]);
+  const [req, setReq] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const [form, setForm] = useState(() => ({
-    givenName: req?.givenName || '',
-    familyName: req?.familyName || '',
-    preferredName: '',
-    dob: '',
-    position: req?.position || '',
-    level: req?.level || '',
-    division: req?.division || '',
-    commencement: req?.commencement || '',
-    managerName: req?.managerName || '',
-    location: req?.location || '',
-    mobile: '',
-    emergencyName: '',
-    emergencyPhone: '',
-    relationship: '',
-    tfn: '',
-    bank: '',
-  }));
-  const [errors, setErrors] = useState({});
-  const [touched, setTouched] = useState({});
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      let resolved = null;
 
-  const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
-  const onBlur = (k) => () => setTouched((t) => ({ ...t, [k]: true }));
-  const errVisible = (k) => touched[k] && errors[k];
+      if (requestIdParam) {
+        resolved = await getRequest(requestIdParam);
+      }
+      if (!resolved && token) {
+        const parsed = parseMagicLinkToken(token);
+        if (parsed.ok) resolved = await getRequest(parsed.payload.rid);
+      }
+      if (!resolved && hasSupabase) {
+        const { data } = await supabase.auth.getSession();
+        if (data?.session?.user?.email) {
+          resolved = await getRequestByEmail(data.session.user.email);
+        }
+      }
+      if (!resolved) {
+        const sid = sessionStorage.getItem('onboarding.activeRequest');
+        if (sid) resolved = await getRequest(sid);
+      }
 
-  const validate = () => {
-    const e = {};
-    if (!form.dob) e.dob = 'Required';
-    if (!form.mobile.trim()) e.mobile = 'Required';
-    else if (!/^(\+?\d[\d\s-]{6,})$/.test(form.mobile))
-      e.mobile = 'Enter a valid phone number';
-    if (!form.emergencyName.trim()) e.emergencyName = 'Required';
-    if (!form.emergencyPhone.trim()) e.emergencyPhone = 'Required';
-    else if (!/^(\+?\d[\d\s-]{6,})$/.test(form.emergencyPhone))
-      e.emergencyPhone = 'Enter a valid phone number';
-    if (!form.tfn.trim()) e.tfn = 'Required';
-    else if (!/^\d{3}\s?\d{3}\s?\d{3}$/.test(form.tfn.replace(/\s/g, '').replace(/(.{3})/g, '$1 ').trim()))
-      e.tfn = 'TFN must be 9 digits';
-    if (!form.bank.trim()) e.bank = 'Required';
-    return e;
-  };
+      if (!cancelled) {
+        setReq(resolved);
+        setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [token, requestIdParam]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen py-10 px-4">
+        <CandidateChrome>
+          <Alert kind="info">Loading your onboarding record…</Alert>
+        </CandidateChrome>
+      </div>
+    );
+  }
 
   if (!req) {
     return (
@@ -89,8 +94,65 @@ export default function OnboardingForm() {
     );
   }
 
-  const onSubmit = (e) => {
+  // Keyed on req.id so if the active request ever changes, the inner
+  // form remounts with a fresh lazy init.
+  return <FormView key={req.id} req={req} isPreview={isPreview} />;
+}
+
+/**
+ * Inner component — seeds its state from `req` at mount and then owns it.
+ */
+function FormView({ req, isPreview }) {
+  const navigate = useNavigate();
+
+  const [form, setForm] = useState(() => ({
+    givenName: req.givenName || '',
+    familyName: req.familyName || '',
+    preferredName: '',
+    dob: '',
+    position: req.position || '',
+    level: req.level || '',
+    division: req.division || '',
+    commencement: req.commencement || '',
+    managerName: req.managerName || '',
+    location: req.location || '',
+    mobile: '',
+    emergencyName: '',
+    emergencyPhone: '',
+    relationship: '',
+    tfn: '',
+    bank: '',
+  }));
+
+  const [errors, setErrors] = useState({});
+  const [touched, setTouched] = useState({});
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
+
+  const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
+  const onBlur = (k) => () => setTouched((t) => ({ ...t, [k]: true }));
+  const errVisible = (k) => touched[k] && errors[k];
+
+  const validate = () => {
+    const e = {};
+    if (!form.dob) e.dob = 'Required';
+    if (!form.mobile.trim()) e.mobile = 'Required';
+    else if (!/^(\+?\d[\d\s-]{6,})$/.test(form.mobile))
+      e.mobile = 'Enter a valid phone number';
+    if (!form.emergencyName.trim()) e.emergencyName = 'Required';
+    if (!form.emergencyPhone.trim()) e.emergencyPhone = 'Required';
+    else if (!/^(\+?\d[\d\s-]{6,})$/.test(form.emergencyPhone))
+      e.emergencyPhone = 'Enter a valid phone number';
+    if (!form.tfn.trim()) e.tfn = 'Required';
+    else if (!/^\d{3}\s?\d{3}\s?\d{3}$/.test(form.tfn.replace(/\s/g, '').replace(/(.{3})/g, '$1 ').trim()))
+      e.tfn = 'TFN must be 9 digits';
+    if (!form.bank.trim()) e.bank = 'Required';
+    return e;
+  };
+
+  const onSubmit = async (e) => {
     e.preventDefault();
+    setSubmitError('');
     const es = validate();
     setErrors(es);
     setTouched(
@@ -102,9 +164,20 @@ export default function OnboardingForm() {
       window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
-    submitCandidateForm(req.id, form);
-    sessionStorage.setItem('onboarding.activeRequest', req.id);
-    navigate(`/candidate/done`);
+    if (isPreview) {
+      alert('Preview mode — submission skipped. In a real flow, this would write to identity_records.');
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await submitCandidateForm(req.id, form);
+      sessionStorage.setItem('onboarding.activeRequest', req.id);
+      navigate(`/candidate/done`);
+    } catch (err) {
+      console.error(err);
+      setSubmitError(err.message || 'Submission failed. Please try again.');
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -114,10 +187,18 @@ export default function OnboardingForm() {
       </div>
 
       <CandidateChrome>
+        {isPreview && (
+          <Alert kind="warn" className="mb-5">
+            <strong>Preview mode</strong> — this is how the candidate experience will look. Submission is disabled.
+          </Alert>
+        )}
+
         <Alert kind="success" className="mb-5">
           Identity verified successfully. Some fields below have been pre-filled
           from your employment record. Please review all information before submitting.
         </Alert>
+
+        {submitError && <Alert kind="error">{submitError}</Alert>}
 
         <ProgressSteps
           steps={['Verify', 'Your Details', 'Review', 'Submit']}
@@ -263,13 +344,14 @@ export default function OnboardingForm() {
           </Card>
 
           <div className="flex gap-3 mt-6">
-            <button type="submit" className="gov-btn gov-btn-primary">
-              Continue to Review
+            <button type="submit" className="gov-btn gov-btn-primary" disabled={submitting}>
+              {submitting ? 'Submitting…' : 'Submit Onboarding Form'}
             </button>
             <button
               type="button"
               className="gov-btn gov-btn-secondary"
               onClick={() => alert('Saved (demo — in-memory only).')}
+              disabled={submitting}
             >
               Save and return later
             </button>

@@ -1,0 +1,1203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>New User Onboarding — Mockup v1</title>
+<style>
+  :root {
+    --navy:       #1B2E4B;
+    --navy-dark:  #111E33;
+    --navy-light: #243654;
+    --gold:       #B07D2A;
+    --gold-light: #C9922A;
+    --gold-bg:    #FDF3E3;
+    --teal:       #1A6B72;
+    --teal-light: #E4F3F4;
+    --bg:         #F2F1ED;
+    --surface:    #FFFFFF;
+    --border:     #C8C5BC;
+    --border-dark:#9E9B92;
+    --text:       #1A1A18;
+    --text-mid:   #44443E;
+    --text-soft:  #6E6D67;
+    --text-inv:   #FFFFFF;
+    --success:    #1A5E42;
+    --success-bg: #E4F4EC;
+    --error:      #8B1A1A;
+    --error-bg:   #FAEAEA;
+    --warn-bg:    #FEF6E4;
+    --warn:       #7A5010;
+    --tag-blue:   #1C4080;
+    --tag-blue-bg:#E8EEF8;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  /* ─── CHROME ─────────────────────────────────────── */
+  .gov-bar {
+    background: var(--navy-dark);
+    padding: 6px 32px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .gov-bar .coa {
+    width: 28px; height: 28px;
+    border: 2px solid #C9922A;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700; color: #C9922A;
+    letter-spacing: 0.5px;
+  }
+  .gov-bar span {
+    color: #CBD5E1; font-size: 12px; letter-spacing: 0.3px;
+  }
+
+  .app-header {
+    background: var(--navy);
+    padding: 0 32px;
+    display: flex;
+    align-items: stretch;
+    justify-content: space-between;
+    border-bottom: 3px solid var(--gold-light);
+  }
+  .app-header .brand {
+    display: flex; align-items: center; gap: 14px;
+    padding: 18px 0;
+  }
+  .app-header .brand-icon {
+    width: 38px; height: 38px;
+    background: var(--gold-light);
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; font-weight: 700; color: var(--navy-dark);
+    font-family: Georgia, serif;
+  }
+  .app-header .brand-text h1 {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 17px; font-weight: 700;
+    color: #FFFFFF; letter-spacing: 0.2px;
+  }
+  .app-header .brand-text p {
+    font-size: 11px; color: #8EA8C8; letter-spacing: 0.4px; text-transform: uppercase;
+  }
+  .app-header .user-pill {
+    display: flex; align-items: center; gap: 10px;
+    padding: 18px 0;
+  }
+  .user-pill .avatar {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: var(--navy-light);
+    border: 1.5px solid #8EA8C8;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 600; color: #CBD5E1;
+  }
+  .user-pill .name { font-size: 13px; color: #CBD5E1; }
+  .user-pill .role { font-size: 11px; color: #8EA8C8; }
+
+  /* ─── SCREEN NAV ──────────────────────────────────── */
+  .screen-nav {
+    background: var(--navy-light);
+    padding: 0 32px;
+    display: flex; gap: 2px;
+    overflow-x: auto;
+  }
+  .screen-nav button {
+    background: none; border: none; cursor: pointer;
+    padding: 10px 16px;
+    font-size: 12px; font-weight: 600;
+    color: #8EA8C8;
+    letter-spacing: 0.3px;
+    border-bottom: 3px solid transparent;
+    white-space: nowrap;
+    transition: color .15s, border-color .15s;
+  }
+  .screen-nav button:hover { color: #CBD5E1; }
+  .screen-nav button.active { color: var(--gold-light); border-bottom-color: var(--gold-light); }
+  .screen-nav .divider {
+    width: 1px; background: #2E4A6A;
+    margin: 6px 8px;
+  }
+
+  /* ─── SCREENS ─────────────────────────────────────── */
+  .screens { padding: 32px; max-width: 960px; margin: 0 auto; }
+  .screen { display: none; animation: fadeIn .2s ease; }
+  .screen.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+  /* ─── FORM COMPONENTS ─────────────────────────────── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 28px 32px;
+    margin-bottom: 20px;
+  }
+  .card-title {
+    font-family: Georgia, serif;
+    font-size: 19px; font-weight: 700;
+    color: var(--navy);
+    margin-bottom: 4px;
+  }
+  .card-sub {
+    font-size: 13px; color: var(--text-soft);
+    margin-bottom: 22px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid var(--border);
+  }
+  .field { margin-bottom: 18px; }
+  .field label {
+    display: block;
+    font-size: 13px; font-weight: 600;
+    color: var(--text-mid);
+    margin-bottom: 5px;
+    letter-spacing: 0.1px;
+  }
+  .field .hint { font-size: 12px; color: var(--text-soft); margin-bottom: 4px; }
+  .field input, .field select, .field textarea {
+    width: 100%;
+    padding: 9px 12px;
+    border: 1.5px solid var(--border);
+    border-radius: 3px;
+    font-size: 14px;
+    color: var(--text);
+    background: var(--surface);
+    transition: border-color .15s;
+    font-family: inherit;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus {
+    outline: none;
+    border-color: var(--navy);
+    box-shadow: 0 0 0 3px rgba(27,46,75,0.12);
+  }
+  .field input.prefilled {
+    background: #F7F6F2;
+    color: var(--text-mid);
+    border-color: #D4D0C8;
+  }
+  .field .prefill-note {
+    font-size: 11px; color: var(--text-soft);
+    margin-top: 3px;
+  }
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+  /* ─── BUTTONS ─────────────────────────────────────── */
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 10px 22px;
+    border-radius: 3px;
+    font-size: 14px; font-weight: 600;
+    cursor: pointer; border: none;
+    letter-spacing: 0.2px;
+    transition: background .15s, box-shadow .15s;
+  }
+  .btn-primary {
+    background: var(--navy);
+    color: #FFFFFF;
+  }
+  .btn-primary:hover { background: var(--navy-dark); box-shadow: 0 2px 6px rgba(0,0,0,.18); }
+  .btn-secondary {
+    background: var(--surface);
+    color: var(--navy);
+    border: 1.5px solid var(--navy);
+  }
+  .btn-secondary:hover { background: #EEF2F8; }
+  .btn-danger {
+    background: var(--error);
+    color: #FFFFFF;
+  }
+  .btn-danger:hover { background: #6B1111; }
+  .btn-gold {
+    background: var(--gold-light);
+    color: #FFFFFF;
+  }
+  .btn-gold:hover { background: var(--gold); }
+  .btn-sm { padding: 6px 14px; font-size: 13px; }
+  .btn-actions { display: flex; gap: 12px; margin-top: 24px; align-items: center; }
+
+  /* ─── ALERTS ──────────────────────────────────────── */
+  .alert {
+    padding: 12px 16px;
+    border-radius: 3px;
+    font-size: 13px;
+    margin-bottom: 20px;
+    display: flex; gap: 10px; align-items: flex-start;
+    border-left: 4px solid;
+  }
+  .alert-warn { background: var(--warn-bg); border-color: var(--gold-light); color: var(--warn); }
+  .alert-error { background: var(--error-bg); border-color: var(--error); color: var(--error); }
+  .alert-success { background: var(--success-bg); border-color: var(--success); color: var(--success); }
+  .alert-info { background: var(--tag-blue-bg); border-color: var(--tag-blue); color: var(--tag-blue); }
+  .alert-icon { font-size: 16px; margin-top: 1px; flex-shrink: 0; }
+
+  /* ─── PAGE TITLES ─────────────────────────────────── */
+  .page-header { margin-bottom: 24px; }
+  .page-header h2 {
+    font-family: Georgia, serif;
+    font-size: 26px; font-weight: 700;
+    color: var(--navy-dark);
+    margin-bottom: 4px;
+  }
+  .page-header p { font-size: 14px; color: var(--text-soft); }
+
+  /* breadcrumb */
+  .breadcrumb {
+    font-size: 12px; color: var(--text-soft);
+    margin-bottom: 16px;
+    display: flex; gap: 6px; align-items: center;
+  }
+  .breadcrumb a { color: var(--teal); text-decoration: none; }
+  .breadcrumb a:hover { text-decoration: underline; }
+  .breadcrumb span { color: var(--border-dark); }
+
+  /* ─── STATUS TAGS ─────────────────────────────────── */
+  .tag {
+    display: inline-block;
+    padding: 2px 9px;
+    border-radius: 2px;
+    font-size: 11px; font-weight: 700;
+    letter-spacing: 0.4px; text-transform: uppercase;
+  }
+  .tag-pending  { background: var(--warn-bg);      color: var(--warn);     border: 1px solid #E8C97A; }
+  .tag-complete { background: var(--success-bg);   color: var(--success);  border: 1px solid #8ECBA8; }
+  .tag-expired  { background: var(--error-bg);     color: var(--error);    border: 1px solid #E8AAAA; }
+  .tag-sent     { background: var(--tag-blue-bg);  color: var(--tag-blue); border: 1px solid #A8BBDC; }
+
+  /* ─── TABLE ───────────────────────────────────────── */
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead tr { background: var(--navy); }
+  thead th {
+    padding: 10px 14px;
+    text-align: left;
+    font-size: 11px; font-weight: 700;
+    color: #CBD5E1;
+    letter-spacing: 0.5px; text-transform: uppercase;
+  }
+  tbody tr { border-bottom: 1px solid var(--border); }
+  tbody tr:hover { background: #F7F6F2; }
+  tbody td { padding: 11px 14px; color: var(--text); vertical-align: middle; }
+
+  /* ─── NOTIFICATION PANEL ──────────────────────────── */
+  .notif-item {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border);
+    display: flex; gap: 12px; align-items: flex-start;
+  }
+  .notif-item:last-child { border-bottom: none; }
+  .notif-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    margin-top: 6px; flex-shrink: 0;
+  }
+  .notif-dot.unread { background: var(--gold-light); }
+  .notif-dot.read   { background: var(--border); }
+  .notif-title { font-size: 13px; font-weight: 600; color: var(--text); }
+  .notif-body  { font-size: 12px; color: var(--text-soft); margin-top: 1px; }
+  .notif-time  { font-size: 11px; color: var(--border-dark); margin-top: 3px; }
+
+  /* ─── DASHBOARD STATS ─────────────────────────────── */
+  .stat-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 24px; }
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-top: 3px solid var(--navy);
+    border-radius: 4px;
+    padding: 16px 18px;
+  }
+  .stat-card.gold  { border-top-color: var(--gold-light); }
+  .stat-card.teal  { border-top-color: var(--teal); }
+  .stat-card.red   { border-top-color: var(--error); }
+  .stat-card.green { border-top-color: var(--success); }
+  .stat-num { font-size: 28px; font-weight: 700; color: var(--navy); font-family: Georgia, serif; }
+  .stat-label { font-size: 12px; color: var(--text-soft); margin-top: 2px; }
+
+  /* ─── CANDIDATE SCREENS ───────────────────────────── */
+  .candidate-wrap {
+    min-height: 400px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .candidate-header {
+    background: var(--navy);
+    padding: 20px 32px;
+    border-bottom: 3px solid var(--gold-light);
+    display: flex; align-items: center; gap: 14px;
+  }
+  .candidate-header .logo-box {
+    width: 36px; height: 36px;
+    background: var(--gold-light); border-radius: 5px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: Georgia, serif; font-size: 16px; font-weight: 700; color: var(--navy-dark);
+  }
+  .candidate-header h1 {
+    font-family: Georgia, serif; font-size: 15px;
+    font-weight: 700; color: #FFFFFF;
+  }
+  .candidate-header p { font-size: 11px; color: #8EA8C8; }
+  .candidate-body { padding: 32px; }
+
+  /* ─── MAGIC LINK LANDING ──────────────────────────── */
+  .magic-hero {
+    text-align: center;
+    padding: 36px 32px 28px;
+  }
+  .magic-icon {
+    width: 64px; height: 64px;
+    background: var(--teal-light);
+    border: 2px solid var(--teal);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 26px;
+    margin: 0 auto 18px;
+  }
+  .magic-hero h2 {
+    font-family: Georgia, serif;
+    font-size: 22px; font-weight: 700; color: var(--navy-dark);
+    margin-bottom: 8px;
+  }
+  .magic-hero p { font-size: 14px; color: var(--text-soft); max-width: 420px; margin: 0 auto; }
+
+  /* ─── CONFIRMATION ────────────────────────────────── */
+  .confirm-hero {
+    text-align: center;
+    padding: 40px 32px 32px;
+  }
+  .confirm-icon {
+    width: 72px; height: 72px;
+    background: var(--success-bg);
+    border: 2px solid var(--success);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 30px;
+    margin: 0 auto 20px;
+  }
+  .confirm-hero h2 {
+    font-family: Georgia, serif;
+    font-size: 24px; font-weight: 700; color: var(--success);
+    margin-bottom: 8px;
+  }
+  .confirm-hero p { font-size: 14px; color: var(--text-soft); max-width: 440px; margin: 0 auto 24px; }
+  .next-steps { text-align: left; max-width: 500px; margin: 0 auto; }
+  .next-steps h3 {
+    font-size: 13px; font-weight: 700; color: var(--text-mid);
+    text-transform: uppercase; letter-spacing: 0.5px;
+    margin-bottom: 12px;
+  }
+  .step-item {
+    display: flex; gap: 12px; align-items: flex-start;
+    margin-bottom: 12px;
+  }
+  .step-num {
+    width: 24px; height: 24px; border-radius: 50%;
+    background: var(--navy);
+    color: #FFFFFF; font-size: 11px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; margin-top: 1px;
+  }
+  .step-text { font-size: 13px; color: var(--text-mid); }
+
+  /* ─── REISSUE SCREEN ──────────────────────────────── */
+  .candidate-summary {
+    background: #F7F6F2;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 16px 18px;
+    margin-bottom: 20px;
+  }
+  .candidate-summary h3 { font-size: 13px; font-weight: 700; color: var(--text-mid); margin-bottom: 8px; }
+  .summary-row { display: flex; gap: 0; margin-bottom: 4px; }
+  .summary-row dt { width: 160px; font-size: 12px; color: var(--text-soft); font-weight: 600; }
+  .summary-row dd { font-size: 12px; color: var(--text); }
+
+  /* progress steps */
+  .progress-bar {
+    display: flex; align-items: center;
+    margin-bottom: 28px;
+  }
+  .prog-step {
+    display: flex; flex-direction: column; align-items: center;
+    font-size: 11px; color: var(--text-soft);
+    flex: 1;
+    position: relative;
+  }
+  .prog-step:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    top: 12px; left: 50%;
+    width: 100%; height: 2px;
+    background: var(--border);
+    z-index: 0;
+  }
+  .prog-step.done:not(:last-child)::after { background: var(--success); }
+  .prog-dot {
+    width: 24px; height: 24px; border-radius: 50%;
+    background: var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 700; color: #fff;
+    margin-bottom: 4px; z-index: 1;
+  }
+  .prog-step.done .prog-dot   { background: var(--success); }
+  .prog-step.active .prog-dot { background: var(--navy); }
+  .prog-step.active { color: var(--navy); font-weight: 600; }
+
+  /* section separator */
+  .section-sep {
+    font-size: 11px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.6px;
+    color: var(--text-soft);
+    background: var(--bg);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    padding: 7px 0;
+    margin: 24px 0 18px;
+  }
+
+  /* ─── TABS (within dashboard) ─────────────────────── */
+  .tab-bar {
+    display: flex; border-bottom: 2px solid var(--border);
+    margin-bottom: 20px; gap: 0;
+  }
+  .tab-bar button {
+    background: none; border: none; cursor: pointer;
+    padding: 9px 18px;
+    font-size: 13px; font-weight: 600;
+    color: var(--text-soft);
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    transition: color .15s;
+  }
+  .tab-bar button.active { color: var(--navy); border-bottom-color: var(--navy); }
+  .tab-bar button:hover:not(.active) { color: var(--text); }
+
+  /* scrollable table */
+  .table-wrap { overflow-x: auto; }
+
+  /* required star */
+  .req { color: var(--error); margin-left: 2px; }
+</style>
+</head>
+<body>
+
+<!-- Government bar -->
+<div class="gov-bar">
+  <div class="coa">AU</div>
+  <span>Australian Government &nbsp;|&nbsp; Department of Human Services</span>
+</div>
+
+<!-- App header -->
+<div class="app-header">
+  <div class="brand">
+    <div class="brand-icon">ID</div>
+    <div class="brand-text">
+      <h1>Identity Onboarding Portal</h1>
+      <p>HR Administration System</p>
+    </div>
+  </div>
+  <div class="user-pill">
+    <div class="avatar">SC</div>
+    <div>
+      <div class="name">Sarah Chen</div>
+      <div class="role">HR Onboarding Coordinator</div>
+    </div>
+  </div>
+</div>
+
+<!-- Screen navigation -->
+<div class="screen-nav">
+  <button class="active" onclick="showScreen('s1', this)">HR · Submit Email</button>
+  <button onclick="showScreen('s2', this)">HR · Dashboard</button>
+  <button onclick="showScreen('s3', this)">HR · Reissue Link</button>
+  <div class="divider"></div>
+  <button onclick="showScreen('s4', this)">Candidate · Auth Landing</button>
+  <button onclick="showScreen('s5', this)">Candidate · Onboarding Form</button>
+  <button onclick="showScreen('s6', this)">Candidate · Confirmation</button>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     SCREEN 1 — HR: Submit Email
+═══════════════════════════════════════════════════════ -->
+<div class="screens">
+<div id="s1" class="screen active">
+  <div class="breadcrumb">
+    <a href="#">Home</a><span>/</span>
+    <span>New Onboarding Request</span>
+  </div>
+  <div class="page-header">
+    <h2>New Onboarding Request</h2>
+    <p>Enter the candidate's details to begin the onboarding process. A secure magic link will be sent to the candidate's email address.</p>
+  </div>
+
+  <div class="alert alert-info">
+    <span class="alert-icon">ℹ</span>
+    <div>The candidate must have a confirmed offer of employment before initiating onboarding. Ensure manager details are correct prior to submission.</div>
+  </div>
+
+  <div style="display:grid; grid-template-columns: 1fr 320px; gap: 20px;">
+    <div>
+      <div class="card">
+        <div class="card-title">Candidate Details</div>
+        <div class="card-sub">Personal and contact information for the new hire.</div>
+
+        <div class="field-row">
+          <div class="field">
+            <label>Given Name <span class="req">*</span></label>
+            <input type="text" placeholder="e.g. James">
+          </div>
+          <div class="field">
+            <label>Family Name <span class="req">*</span></label>
+            <input type="text" placeholder="e.g. Nguyen">
+          </div>
+        </div>
+        <div class="field">
+          <label>Work Email Address <span class="req">*</span></label>
+          <div class="hint">Enter the candidate's official work email. The magic link will be sent to this address.</div>
+          <input type="email" placeholder="james.nguyen@agency.gov.au">
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>Position Title <span class="req">*</span></label>
+            <input type="text" placeholder="e.g. Senior Policy Adviser">
+          </div>
+          <div class="field">
+            <label>Employment Level</label>
+            <select>
+              <option>— Select —</option>
+              <option>APS 3</option>
+              <option>APS 4</option>
+              <option>APS 5</option>
+              <option selected>APS 6</option>
+              <option>EL 1</option>
+              <option>EL 2</option>
+              <option>SES Band 1</option>
+            </select>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>Division / Business Unit <span class="req">*</span></label>
+            <input type="text" placeholder="e.g. Digital Transformation">
+          </div>
+          <div class="field">
+            <label>Commencement Date <span class="req">*</span></label>
+            <input type="date" value="2026-04-14">
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Manager Details</div>
+        <div class="card-sub">These details will be embedded in the magic link and pre-populate the onboarding form.</div>
+        <div class="field-row">
+          <div class="field">
+            <label>Manager Full Name <span class="req">*</span></label>
+            <input type="text" placeholder="e.g. Dr. Michelle Park">
+          </div>
+          <div class="field">
+            <label>Manager Email <span class="req">*</span></label>
+            <input type="email" placeholder="m.park@agency.gov.au">
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>Manager Position</label>
+            <input type="text" placeholder="e.g. Director, Digital Policy">
+          </div>
+          <div class="field">
+            <label>Work Location</label>
+            <select>
+              <option>— Select —</option>
+              <option selected>Canberra ACT</option>
+              <option>Sydney NSW</option>
+              <option>Melbourne VIC</option>
+              <option>Brisbane QLD</option>
+              <option>Perth WA</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="btn-actions">
+        <button class="btn btn-primary">Generate &amp; Send Magic Link</button>
+        <button class="btn btn-secondary">Save as Draft</button>
+        <span style="font-size:12px; color:var(--text-soft); margin-left:auto;">* Required fields</span>
+      </div>
+    </div>
+
+    <!-- Side panel -->
+    <div>
+      <div class="card" style="border-top: 3px solid var(--navy);">
+        <div style="font-size:13px; font-weight:700; color:var(--navy); margin-bottom:12px;">What happens next?</div>
+        <div class="step-item" style="margin-bottom:10px;">
+          <div class="step-num">1</div>
+          <div class="step-text">A secure magic link is generated and embedded with the candidate's details.</div>
+        </div>
+        <div class="step-item" style="margin-bottom:10px;">
+          <div class="step-num">2</div>
+          <div class="step-text">The candidate receives an onboarding email with the link and form access.</div>
+        </div>
+        <div class="step-item" style="margin-bottom:10px;">
+          <div class="step-num">3</div>
+          <div class="step-text">The candidate authenticates and completes the pre-populated onboarding form.</div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">4</div>
+          <div class="step-text">You receive a notification and the identity record is submitted to the IAM system.</div>
+        </div>
+      </div>
+      <div class="card" style="border-top: 3px solid var(--gold-light);">
+        <div style="font-size:13px; font-weight:700; color:var(--warn); margin-bottom:8px;">Security Notice</div>
+        <div style="font-size:12px; color:var(--text-soft); line-height:1.7;">Magic links expire after <strong>72 hours</strong>. If the candidate does not complete onboarding within this window, you will be prompted to reissue a new link.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     SCREEN 2 — HR: Dashboard
+═══════════════════════════════════════════════════════ -->
+<div id="s2" class="screen">
+  <div class="breadcrumb">
+    <a href="#">Home</a><span>/</span>
+    <span>Onboarding Dashboard</span>
+  </div>
+  <div class="page-header" style="display:flex; justify-content:space-between; align-items:flex-start;">
+    <div>
+      <h2>Onboarding Dashboard</h2>
+      <p>Monitor the status of all active and recent onboarding requests.</p>
+    </div>
+    <button class="btn btn-primary btn-sm" style="margin-top:4px;">+ New Request</button>
+  </div>
+
+  <div class="stat-row">
+    <div class="stat-card gold">
+      <div class="stat-num">4</div>
+      <div class="stat-label">Awaiting Candidate</div>
+    </div>
+    <div class="stat-card green">
+      <div class="stat-num">12</div>
+      <div class="stat-label">Completed this month</div>
+    </div>
+    <div class="stat-card red">
+      <div class="stat-num">2</div>
+      <div class="stat-label">Links Expired</div>
+    </div>
+    <div class="stat-card teal">
+      <div class="stat-num">18</div>
+      <div class="stat-label">Total this quarter</div>
+    </div>
+  </div>
+
+  <div style="display:grid; grid-template-columns: 1fr 280px; gap: 20px;">
+    <div class="card" style="padding: 0; overflow:hidden;">
+      <div style="padding:18px 22px 0;">
+        <div class="tab-bar">
+          <button class="active">All</button>
+          <button>Pending</button>
+          <button>Completed</button>
+          <button>Expired</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Candidate</th>
+              <th>Position</th>
+              <th>Link Sent</th>
+              <th>Expiry</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>James Nguyen</strong><br><span style="font-size:11px;color:var(--text-soft);">james.nguyen@agency.gov.au</span></td>
+              <td>Senior Policy Adviser</td>
+              <td>24 Mar 2026</td>
+              <td>27 Mar 2026</td>
+              <td><span class="tag tag-pending">Pending</span></td>
+              <td><button class="btn btn-secondary btn-sm">View</button></td>
+            </tr>
+            <tr>
+              <td><strong>Priya Sharma</strong><br><span style="font-size:11px;color:var(--text-soft);">p.sharma@agency.gov.au</span></td>
+              <td>Data Analyst</td>
+              <td>23 Mar 2026</td>
+              <td>26 Mar 2026</td>
+              <td><span class="tag tag-complete">Complete</span></td>
+              <td><button class="btn btn-secondary btn-sm">View</button></td>
+            </tr>
+            <tr>
+              <td><strong>Michael Torres</strong><br><span style="font-size:11px;color:var(--text-soft);">m.torres@agency.gov.au</span></td>
+              <td>ICT Security Analyst</td>
+              <td>20 Mar 2026</td>
+              <td>23 Mar 2026</td>
+              <td><span class="tag tag-expired">Expired</span></td>
+              <td><button class="btn btn-danger btn-sm">Reissue</button></td>
+            </tr>
+            <tr>
+              <td><strong>Aisha Okonkwo</strong><br><span style="font-size:11px;color:var(--text-soft);">a.okonkwo@agency.gov.au</span></td>
+              <td>Communications Officer</td>
+              <td>22 Mar 2026</td>
+              <td>25 Mar 2026</td>
+              <td><span class="tag tag-sent">Link Sent</span></td>
+              <td><button class="btn btn-secondary btn-sm">View</button></td>
+            </tr>
+            <tr>
+              <td><strong>Daniel Wu</strong><br><span style="font-size:11px;color:var(--text-soft);">d.wu@agency.gov.au</span></td>
+              <td>Legal Counsel</td>
+              <td>21 Mar 2026</td>
+              <td>24 Mar 2026</td>
+              <td><span class="tag tag-complete">Complete</span></td>
+              <td><button class="btn btn-secondary btn-sm">View</button></td>
+            </tr>
+            <tr>
+              <td><strong>Fatima Al-Hassan</strong><br><span style="font-size:11px;color:var(--text-soft);">f.alhassan@agency.gov.au</span></td>
+              <td>Project Manager</td>
+              <td>19 Mar 2026</td>
+              <td>22 Mar 2026</td>
+              <td><span class="tag tag-expired">Expired</span></td>
+              <td><button class="btn btn-danger btn-sm">Reissue</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Notifications -->
+    <div class="card" style="padding:0; overflow:hidden;">
+      <div style="padding:14px 16px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
+        <div style="font-size:13px; font-weight:700; color:var(--navy);">Notifications</div>
+        <span style="font-size:11px; color:var(--gold-light); cursor:pointer; font-weight:600;">Mark all read</span>
+      </div>
+      <div class="notif-item">
+        <div class="notif-dot unread"></div>
+        <div>
+          <div class="notif-title">Form completed — Priya Sharma</div>
+          <div class="notif-body">Onboarding form submitted. Identity record written to IAM DB.</div>
+          <div class="notif-time">Today, 2:14 pm</div>
+        </div>
+      </div>
+      <div class="notif-item">
+        <div class="notif-dot unread"></div>
+        <div>
+          <div class="notif-title">Link expired — Michael Torres</div>
+          <div class="notif-body">Magic link expired without completion. Action required.</div>
+          <div class="notif-time">Today, 9:00 am</div>
+        </div>
+      </div>
+      <div class="notif-item">
+        <div class="notif-dot unread"></div>
+        <div>
+          <div class="notif-title">Link expired — Fatima Al-Hassan</div>
+          <div class="notif-body">Magic link expired without completion. Action required.</div>
+          <div class="notif-time">Yesterday, 9:00 am</div>
+        </div>
+      </div>
+      <div class="notif-item">
+        <div class="notif-dot read"></div>
+        <div>
+          <div class="notif-title">Form completed — Daniel Wu</div>
+          <div class="notif-body">Onboarding form submitted successfully.</div>
+          <div class="notif-time">21 Mar, 4:47 pm</div>
+        </div>
+      </div>
+      <div class="notif-item">
+        <div class="notif-dot read"></div>
+        <div>
+          <div class="notif-title">Link sent — James Nguyen</div>
+          <div class="notif-body">Onboarding email delivered to candidate.</div>
+          <div class="notif-time">24 Mar, 10:02 am</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     SCREEN 3 — HR: Reissue Magic Link
+═══════════════════════════════════════════════════════ -->
+<div id="s3" class="screen">
+  <div class="breadcrumb">
+    <a href="#">Home</a><span>/</span>
+    <a href="#">Dashboard</a><span>/</span>
+    <span>Reissue Magic Link</span>
+  </div>
+  <div class="page-header">
+    <h2>Reissue Magic Link</h2>
+    <p>The candidate's previous magic link has expired. Review the details below and issue a new link.</p>
+  </div>
+
+  <div class="alert alert-error">
+    <span class="alert-icon">⚠</span>
+    <div><strong>Magic link expired</strong> — The link sent to Michael Torres on 20 March 2026 expired on 23 March 2026 without being used. A new link must be issued to continue the onboarding process.</div>
+  </div>
+
+  <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+    <div class="card">
+      <div class="card-title">Candidate Record</div>
+      <div class="card-sub">Verify these details are still correct before reissuing.</div>
+      <div class="candidate-summary">
+        <h3>Candidate Information</h3>
+        <div class="summary-row"><dt>Full Name</dt><dd>Michael Torres</dd></div>
+        <div class="summary-row"><dt>Email Address</dt><dd>m.torres@agency.gov.au</dd></div>
+        <div class="summary-row"><dt>Position</dt><dd>ICT Security Analyst</dd></div>
+        <div class="summary-row"><dt>Level</dt><dd>APS 6</dd></div>
+        <div class="summary-row"><dt>Division</dt><dd>Cyber Security Operations</dd></div>
+        <div class="summary-row"><dt>Commencement</dt><dd>7 April 2026</dd></div>
+      </div>
+      <div class="candidate-summary">
+        <h3>Manager Information</h3>
+        <div class="summary-row"><dt>Manager</dt><dd>Brendan Walsh</dd></div>
+        <div class="summary-row"><dt>Manager Email</dt><dd>b.walsh@agency.gov.au</dd></div>
+        <div class="summary-row"><dt>Manager Position</dt><dd>Director, Cyber Operations</dd></div>
+        <div class="summary-row"><dt>Location</dt><dd>Canberra ACT</dd></div>
+      </div>
+      <div class="field">
+        <label>Update Email Address</label>
+        <div class="hint">Only update if the candidate's email has changed.</div>
+        <input type="email" placeholder="m.torres@agency.gov.au">
+      </div>
+    </div>
+
+    <div>
+      <div class="card">
+        <div class="card-title">Reissue Settings</div>
+        <div class="card-sub">Configure the new magic link before sending.</div>
+        <div class="field">
+          <label>Link Validity Period</label>
+          <select>
+            <option>24 hours</option>
+            <option selected>72 hours (recommended)</option>
+            <option>7 days</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Reason for Reissue</label>
+          <select>
+            <option selected>Link expired — candidate did not action</option>
+            <option>Authentication failure</option>
+            <option>Email delivery issue</option>
+            <option>Candidate requested new link</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Internal Note (optional)</label>
+          <textarea style="height:80px;" placeholder="e.g. Candidate was on leave during the original link window."></textarea>
+        </div>
+      </div>
+
+      <div class="card" style="border-top: 3px solid var(--error);">
+        <div style="font-size:13px; font-weight:700; color:var(--error); margin-bottom:8px;">Previous Link History</div>
+        <table style="font-size:12px;">
+          <thead><tr><th>Issued</th><th>Expiry</th><th>Reason</th></tr></thead>
+          <tbody>
+            <tr><td>20 Mar 2026</td><td>23 Mar 2026</td><td><span class="tag tag-expired">Expired</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="btn-actions">
+        <button class="btn btn-danger">Reissue Magic Link</button>
+        <button class="btn btn-secondary">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     SCREEN 4 — Candidate: Auth Landing
+═══════════════════════════════════════════════════════ -->
+<div id="s4" class="screen">
+  <div class="breadcrumb">
+    <span>Candidate-facing screen (external view)</span>
+  </div>
+  <div class="candidate-wrap">
+    <div class="candidate-header">
+      <div class="logo-box">ID</div>
+      <div>
+        <h1>Identity Onboarding Portal</h1>
+        <p>Department of Human Services — Australian Government</p>
+      </div>
+    </div>
+    <div class="candidate-body">
+      <div class="magic-hero">
+        <div class="magic-icon">✉</div>
+        <h2>Welcome — you've been invited to onboard</h2>
+        <p>You are about to begin the identity onboarding process for your new role. This link will securely verify your identity and pre-fill your onboarding form.</p>
+      </div>
+
+      <div style="max-width: 480px; margin: 0 auto;">
+        <div class="alert alert-info" style="margin-bottom:20px;">
+          <span class="alert-icon">ℹ</span>
+          <div>This link is uniquely tied to your email address and can only be used once. Do not share this link with anyone.</div>
+        </div>
+
+        <div class="card" style="margin-bottom:16px;">
+          <div class="card-title" style="font-size:16px; margin-bottom:12px;">Confirm your identity</div>
+          <div class="field">
+            <label>Your Work Email Address</label>
+            <div class="hint">Confirm the email address this invitation was sent to.</div>
+            <input type="email" value="m.torres@agency.gov.au">
+          </div>
+          <div class="field">
+            <label>Invitation Code</label>
+            <div class="hint">This code was included in your invitation email.</div>
+            <input type="text" placeholder="e.g. OB-2026-7X4K">
+          </div>
+          <div class="btn-actions" style="margin-top:16px;">
+            <button class="btn btn-primary" style="width:100%; justify-content:center;">Verify &amp; Continue</button>
+          </div>
+        </div>
+
+        <div style="text-align:center; font-size:12px; color:var(--text-soft);">
+          Having trouble? Contact your HR coordinator or email <span style="color:var(--teal);">onboarding@agency.gov.au</span>
+        </div>
+
+        <div style="margin-top:24px; padding-top:16px; border-top:1px solid var(--border); text-align:center;">
+          <div style="font-size:11px; color:var(--text-soft); line-height:1.8;">
+            This portal is operated by the Department of Human Services under the <em>Public Service Act 1999</em>.<br>
+            Your information is protected under the <em>Privacy Act 1988</em>.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     SCREEN 5 — Candidate: Pre-populated Onboarding Form
+═══════════════════════════════════════════════════════ -->
+<div id="s5" class="screen">
+  <div class="breadcrumb"><span>Candidate-facing screen (external view)</span></div>
+  <div class="candidate-wrap">
+    <div class="candidate-header">
+      <div class="logo-box">ID</div>
+      <div>
+        <h1>Identity Onboarding Portal</h1>
+        <p>Department of Human Services — Australian Government</p>
+      </div>
+    </div>
+    <div class="candidate-body">
+
+      <div class="alert alert-success" style="margin-bottom:20px;">
+        <span class="alert-icon">✓</span>
+        <div>Identity verified successfully. Some fields below have been pre-filled from your employment record. Please review all information before submitting.</div>
+      </div>
+
+      <!-- Progress -->
+      <div class="progress-bar">
+        <div class="prog-step done"><div class="prog-dot">✓</div>Verify</div>
+        <div class="prog-step active"><div class="prog-dot">2</div>Your Details</div>
+        <div class="prog-step"><div class="prog-dot">3</div>Review</div>
+        <div class="prog-step"><div class="prog-dot">4</div>Submit</div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Personal Information</div>
+        <div class="card-sub">Pre-filled fields are marked. Please verify all information is correct and complete any blank fields.</div>
+
+        <div class="field-row">
+          <div class="field">
+            <label>Given Name <span class="req">*</span></label>
+            <input class="prefilled" type="text" value="Michael">
+            <div class="prefill-note">✓ Pre-filled from employment record</div>
+          </div>
+          <div class="field">
+            <label>Family Name <span class="req">*</span></label>
+            <input class="prefilled" type="text" value="Torres">
+            <div class="prefill-note">✓ Pre-filled from employment record</div>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>Preferred Name</label>
+            <input type="text" placeholder="If different from given name">
+          </div>
+          <div class="field">
+            <label>Date of Birth <span class="req">*</span></label>
+            <input type="date">
+          </div>
+        </div>
+
+        <div class="section-sep">Employment Details</div>
+
+        <div class="field-row">
+          <div class="field">
+            <label>Position Title</label>
+            <input class="prefilled" type="text" value="ICT Security Analyst">
+            <div class="prefill-note">✓ Pre-filled from employment record</div>
+          </div>
+          <div class="field">
+            <label>Employment Level</label>
+            <input class="prefilled" type="text" value="APS 6">
+            <div class="prefill-note">✓ Pre-filled from employment record</div>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>Division / Business Unit</label>
+            <input class="prefilled" type="text" value="Cyber Security Operations">
+            <div class="prefill-note">✓ Pre-filled from employment record</div>
+          </div>
+          <div class="field">
+            <label>Commencement Date</label>
+            <input class="prefilled" type="date" value="2026-04-07">
+            <div class="prefill-note">✓ Pre-filled from employment record</div>
+          </div>
+        </div>
+
+        <div class="section-sep">Manager &amp; Location</div>
+
+        <div class="field-row">
+          <div class="field">
+            <label>Reporting Manager</label>
+            <input class="prefilled" type="text" value="Brendan Walsh">
+            <div class="prefill-note">✓ Pre-filled from employment record</div>
+          </div>
+          <div class="field">
+            <label>Work Location</label>
+            <input class="prefilled" type="text" value="Canberra ACT">
+            <div class="prefill-note">✓ Pre-filled from employment record</div>
+          </div>
+        </div>
+
+        <div class="section-sep">Additional Information (Candidate to complete)</div>
+
+        <div class="field-row">
+          <div class="field">
+            <label>Personal Mobile Number <span class="req">*</span></label>
+            <input type="tel" placeholder="04XX XXX XXX">
+          </div>
+          <div class="field">
+            <label>Emergency Contact Name <span class="req">*</span></label>
+            <input type="text" placeholder="Full name">
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>Emergency Contact Phone <span class="req">*</span></label>
+            <input type="tel" placeholder="04XX XXX XXX">
+          </div>
+          <div class="field">
+            <label>Relationship</label>
+            <select>
+              <option>— Select —</option>
+              <option>Spouse / Partner</option>
+              <option>Parent</option>
+              <option>Sibling</option>
+              <option>Friend</option>
+              <option>Other</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label>Tax File Number (TFN) <span class="req">*</span></label>
+          <div class="hint">Your TFN is protected under the <em>Privacy Act 1988</em> and will only be used for payroll purposes.</div>
+          <input type="text" placeholder="XXX XXX XXX">
+        </div>
+        <div class="field">
+          <label>Bank Account for Salary Payment <span class="req">*</span></label>
+          <input type="text" placeholder="BSB — Account Number">
+        </div>
+      </div>
+
+      <div class="btn-actions">
+        <button class="btn btn-primary">Continue to Review</button>
+        <button class="btn btn-secondary">Save and return later</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     SCREEN 6 — Candidate: Confirmation
+═══════════════════════════════════════════════════════ -->
+<div id="s6" class="screen">
+  <div class="breadcrumb"><span>Candidate-facing screen (external view)</span></div>
+  <div class="candidate-wrap">
+    <div class="candidate-header">
+      <div class="logo-box">ID</div>
+      <div>
+        <h1>Identity Onboarding Portal</h1>
+        <p>Department of Human Services — Australian Government</p>
+      </div>
+    </div>
+    <div class="candidate-body">
+      <div class="confirm-hero">
+        <div class="confirm-icon">✓</div>
+        <h2>Onboarding form submitted</h2>
+        <p>Thank you, Michael. Your onboarding information has been received and your identity record has been securely created. Your HR coordinator has been notified.</p>
+      </div>
+
+      <div style="max-width: 560px; margin: 0 auto;">
+        <div class="alert alert-success" style="margin-bottom:24px;">
+          <span class="alert-icon">✓</span>
+          <div><strong>Reference number: OB-2026-00423</strong> — Please keep this reference number for your records. Your HR coordinator may use it when following up.</div>
+        </div>
+
+        <div class="card" style="margin-bottom:16px;">
+          <div class="card-title" style="font-size:15px;">Submission summary</div>
+          <div class="card-sub">The following information has been recorded.</div>
+          <div class="candidate-summary" style="margin-bottom:0;">
+            <div class="summary-row"><dt>Name</dt><dd>Michael Torres</dd></div>
+            <div class="summary-row"><dt>Position</dt><dd>ICT Security Analyst — APS 6</dd></div>
+            <div class="summary-row"><dt>Division</dt><dd>Cyber Security Operations</dd></div>
+            <div class="summary-row"><dt>Commencement</dt><dd>7 April 2026</dd></div>
+            <div class="summary-row"><dt>Reporting Manager</dt><dd>Brendan Walsh</dd></div>
+            <div class="summary-row"><dt>Work Location</dt><dd>Canberra ACT</dd></div>
+            <div class="summary-row"><dt>Submitted</dt><dd>24 March 2026, 3:42 pm AEDT</dd></div>
+          </div>
+        </div>
+
+        <div class="next-steps">
+          <h3>What happens next</h3>
+          <div class="step-item">
+            <div class="step-num">1</div>
+            <div class="step-text">Your identity record has been created in the department's IAM system.</div>
+          </div>
+          <div class="step-item">
+            <div class="step-num">2</div>
+            <div class="step-text">Your accounts and system access will be provisioned before your commencement date of <strong>7 April 2026</strong>.</div>
+          </div>
+          <div class="step-item">
+            <div class="step-num">3</div>
+            <div class="step-text">Your manager, Brendan Walsh, will contact you with your first-day instructions.</div>
+          </div>
+          <div class="step-item">
+            <div class="step-num">4</div>
+            <div class="step-text">If you have any questions, contact <span style="color:var(--teal);">onboarding@agency.gov.au</span> quoting reference <strong>OB-2026-00423</strong>.</div>
+          </div>
+        </div>
+
+        <div style="text-align:center; margin-top:28px; padding-top:20px; border-top:1px solid var(--border);">
+          <div style="font-size:11px; color:var(--text-soft); line-height:1.8;">
+            This portal is operated by the Department of Human Services under the <em>Public Service Act 1999</em>.<br>
+            Your information is protected under the <em>Privacy Act 1988</em>.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- end .screens -->
+
+<script>
+  function showScreen(id, btn) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.screen-nav button').forEach(b => b.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    btn.classList.add('active');
+  }
+</script>
+</body>
+</html>

@@ -5,6 +5,7 @@ import { Card, Breadcrumb, PageHeader } from '../../components/Card';
 import { Field, TextInput, SelectInput } from '../../components/Field';
 import Alert from '../../components/Alert';
 import { createRequest } from '../../lib/store';
+import { hasSupabase } from '../../lib/supabase';
 
 const LEVELS = ['APS 3', 'APS 4', 'APS 5', 'APS 6', 'EL 1', 'EL 2', 'SES Band 1'];
 const LOCATIONS = ['Canberra ACT', 'Sydney NSW', 'Melbourne VIC', 'Brisbane QLD', 'Perth WA'];
@@ -28,6 +29,8 @@ export default function NewRequest() {
   const [form, setForm] = useState(EMPTY);
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
 
   const set = (k) => (e) => {
     setForm((f) => ({ ...f, [k]: e.target.value }));
@@ -50,11 +53,11 @@ export default function NewRequest() {
     return e;
   };
 
-  const onSubmit = (ev) => {
+  const onSubmit = async (ev) => {
     ev.preventDefault();
+    setSubmitError('');
     const e = validate();
     setErrors(e);
-    // mark all touched for visual feedback
     setTouched(
       Object.keys(EMPTY).reduce((acc, k) => ({ ...acc, [k]: true }), {})
     );
@@ -62,8 +65,19 @@ export default function NewRequest() {
       window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
-    const req = createRequest(form);
-    navigate(`/hr/dashboard?justCreated=${req.id}`);
+    setSubmitting(true);
+    try {
+      const { request, magicLinkEmailSent, emailError } = await createRequest(form);
+      const params = new URLSearchParams({ justCreated: request.id });
+      if (magicLinkEmailSent) params.set('emailSent', '1');
+      if (emailError) params.set('emailError', emailError);
+      navigate(`/hr/dashboard?${params.toString()}`);
+    } catch (err) {
+      console.error(err);
+      setSubmitError(err.message || 'Something went wrong. Please try again.');
+      setSubmitting(false);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   };
 
   const errVisible = (k) => touched[k] && errors[k];
@@ -80,6 +94,16 @@ export default function NewRequest() {
         title="New Onboarding Request"
         subtitle="Enter the candidate's details to begin the onboarding process. A secure magic link will be sent to the candidate's email address."
       />
+
+      {!hasSupabase && (
+        <Alert kind="warn">
+          Running in <strong>prototype mode</strong> — Supabase isn't configured, so no real
+          email will be sent. Configure <code>VITE_SUPABASE_URL</code> and{' '}
+          <code>VITE_SUPABASE_ANON_KEY</code> (see <em>SUPABASE_SETUP.md</em>) to send real magic-link emails.
+        </Alert>
+      )}
+
+      {submitError && <Alert kind="error">{submitError}</Alert>}
 
       <Alert kind="info">
         The candidate must have a confirmed offer of employment before initiating
@@ -214,13 +238,14 @@ export default function NewRequest() {
           </Card>
 
           <div className="flex gap-3 mt-6 items-center">
-            <button type="submit" className="gov-btn gov-btn-primary">
-              Generate & Send Magic Link
+            <button type="submit" className="gov-btn gov-btn-primary" disabled={submitting}>
+              {submitting ? 'Sending…' : 'Generate & Send Magic Link'}
             </button>
             <button
               type="button"
               className="gov-btn gov-btn-secondary"
               onClick={() => setForm(EMPTY)}
+              disabled={submitting}
             >
               Clear Form
             </button>

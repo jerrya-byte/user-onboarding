@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import HRLayout from '../../components/HRLayout';
 import { Breadcrumb, PageHeader } from '../../components/Card';
@@ -12,6 +12,7 @@ import {
   refreshStatuses,
   seedIfEmpty,
 } from '../../lib/store';
+import { hasSupabase } from '../../lib/supabase';
 import { formatDate } from '../../lib/format';
 
 const TABS = [
@@ -25,15 +26,40 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const [search] = useSearchParams();
   const [tab, setTab] = useState('all');
-  // Lazy init reads from localStorage exactly once on mount.
-  const [requests] = useState(() => {
-    seedIfEmpty();
-    return refreshStatuses();
-  });
+  const [requests, setRequests] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
   const [notifs, setNotifs] = useState(() => listNotifications());
 
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        await seedIfEmpty();
+        const refreshed = await refreshStatuses();
+        if (!cancelled) {
+          setRequests(refreshed);
+          setLoading(false);
+        }
+      } catch (err) {
+        console.error(err);
+        if (!cancelled) {
+          setLoadError(err.message || 'Could not load requests.');
+          setLoading(false);
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const justCreated = search.get('justCreated');
-  const justCreatedReq = justCreated ? requests.find((r) => r.id === justCreated) : null;
+  const emailSent = search.get('emailSent') === '1';
+  const emailError = search.get('emailError');
+  const justCreatedReq = justCreated
+    ? requests.find((r) => r.id === justCreated)
+    : null;
 
   const filtered = useMemo(() => {
     if (tab === 'all') return requests;
@@ -68,17 +94,37 @@ export default function Dashboard() {
         }
       />
 
-      {justCreatedReq && (
+      {!hasSupabase && (
+        <Alert kind="warn">
+          Running in <strong>prototype mode</strong> (localStorage only). See{' '}
+          <em>SUPABASE_SETUP.md</em> to enable real magic-link emails and database persistence.
+        </Alert>
+      )}
+
+      {loadError && <Alert kind="error">Could not load requests: {loadError}</Alert>}
+
+      {justCreatedReq && emailSent && (
         <Alert kind="success">
-          Magic link generated and sent to <strong>{justCreatedReq.email}</strong>.
-          Invitation code: <code className="font-mono font-semibold">{justCreatedReq.inviteCode}</code>.
-          {' '}
+          Magic link email sent to <strong>{justCreatedReq.email}</strong> via Supabase Auth.
+          The candidate should receive an email within ~30 seconds (check spam if not).
+        </Alert>
+      )}
+      {justCreatedReq && !emailSent && !emailError && (
+        <Alert kind="info">
+          Request created for <strong>{justCreatedReq.email}</strong>. Invitation code:{' '}
+          <code className="font-mono font-semibold">{justCreatedReq.inviteCode}</code>.{' '}
           <Link
-            to={`/candidate/auth?token=${encodeURIComponent(justCreatedReq.magicToken)}`}
+            to={`/candidate/auth?request_id=${justCreatedReq.id}&preview=1&token=${encodeURIComponent(justCreatedReq.magicToken)}`}
             className="underline font-semibold"
           >
             Preview candidate link →
           </Link>
+        </Alert>
+      )}
+      {emailError && (
+        <Alert kind="error">
+          Request created, but the magic-link email failed to send: <em>{emailError}</em>.
+          Check Supabase rate limits or re-issue from the row below.
         </Alert>
       )}
 
@@ -122,14 +168,21 @@ export default function Dashboard() {
                 </tr>
               </thead>
               <tbody>
-                {filtered.length === 0 && (
+                {loading && (
+                  <tr>
+                    <td colSpan={6} className="text-center text-ink-soft py-6">
+                      Loading requests…
+                    </td>
+                  </tr>
+                )}
+                {!loading && filtered.length === 0 && (
                   <tr>
                     <td colSpan={6} className="text-center text-ink-soft py-6">
                       No requests in this tab.
                     </td>
                   </tr>
                 )}
-                {filtered.map((r) => (
+                {!loading && filtered.map((r) => (
                   <tr key={r.id}>
                     <td>
                       <strong>{r.givenName} {r.familyName}</strong>
@@ -150,7 +203,7 @@ export default function Dashboard() {
                         </button>
                       ) : r.status === 'link_sent' ? (
                         <Link
-                          to={`/candidate/auth?token=${encodeURIComponent(r.magicToken)}`}
+                          to={`/candidate/auth?request_id=${r.id}&preview=1&token=${encodeURIComponent(r.magicToken || '')}`}
                           className="gov-btn gov-btn-secondary gov-btn-sm"
                         >
                           Preview Link

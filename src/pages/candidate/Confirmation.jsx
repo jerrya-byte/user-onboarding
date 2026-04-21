@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import CandidateChrome from '../../components/CandidateChrome';
 import { Card } from '../../components/Card';
@@ -6,8 +7,22 @@ import { getRequest } from '../../lib/store';
 import { formatDate, formatDateTime } from '../../lib/format';
 
 export default function Confirmation() {
-  const id = sessionStorage.getItem('onboarding.activeRequest');
-  const req = id ? getRequest(id) : null;
+  const [req, setReq] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const id = sessionStorage.getItem('onboarding.activeRequest');
+      const resolved = id ? await getRequest(id) : null;
+      if (!cancelled) {
+        setReq(resolved);
+        setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
   const submission = req?.submission;
 
   return (
@@ -29,6 +44,8 @@ export default function Confirmation() {
           <p className="text-sm text-ink-soft max-w-[440px] mx-auto mb-6">
             {req
               ? `Thank you, ${req.givenName}. Your onboarding information has been received and your identity record has been securely created. Your HR coordinator has been notified.`
+              : loading
+              ? 'Loading confirmation…'
               : 'Your onboarding information has been received.'}
           </p>
         </div>

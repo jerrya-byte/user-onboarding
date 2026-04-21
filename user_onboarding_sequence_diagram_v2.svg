@@ -1,0 +1,157 @@
+<svg width="100%" viewBox="0 0 680 550" xmlns="http://www.w3.org/2000/svg">
+<defs>
+  <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+    <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  </marker>
+  <style>
+    text { font-family: Arial, sans-serif; fill: #2C2C2A; }
+    .th { font-size: 14px; font-weight: 500; }
+    .ts { font-size: 12px; font-weight: 400; }
+    .arr { stroke: #888780; stroke-width: 1.5; fill: none; }
+    /* Participant colours */
+    .p-gray rect  { fill: #F1EFE8; stroke: #5F5E5A; }
+    .p-gray .th   { fill: #444441; }
+    .p-gray .ts   { fill: #5F5E5A; }
+    .p-purple rect { fill: #EEEDFE; stroke: #534AB7; }
+    .p-purple .th  { fill: #3C3489; }
+    .p-purple .ts  { fill: #534AB7; }
+    .p-amber rect { fill: #FAEEDA; stroke: #854F0B; }
+    .p-amber .th  { fill: #633806; }
+    .p-amber .ts  { fill: #854F0B; }
+    .p-teal rect  { fill: #E1F5EE; stroke: #0F6E56; }
+    .p-teal .th   { fill: #085041; }
+    .p-teal .ts   { fill: #0F6E56; }
+    .p-green rect { fill: #EAF3DE; stroke: #3B6D11; }
+    .p-green .th  { fill: #27500A; }
+    .p-green .ts  { fill: #3B6D11; }
+    .p-coral rect { fill: #FAECE7; stroke: #993C1D; }
+    .p-coral .th  { fill: #712B13; }
+    .p-coral .ts  { fill: #993C1D; }
+    /* Internal action boxes */
+    .box-purple rect { fill: #EEEDFE; stroke: #534AB7; }
+    .box-purple .ts  { fill: #3C3489; }
+    .box-coral rect  { fill: #FAECE7; stroke: #993C1D; }
+    .box-coral .ts   { fill: #712B13; }
+    /* Alt/error block */
+    .alt-border { fill: none; stroke: #B4B2A9; stroke-width: 0.5; stroke-dasharray: 6 3; }
+    .alt-label  { font-size: 11px; fill: #888780; font-family: Arial, sans-serif; }
+    /* Lifelines */
+    .lifeline { stroke: #D3D1C7; stroke-width: 0.5; stroke-dasharray: 4 4; }
+    /* Arrow labels */
+    .arr-label { font-size: 11px; fill: #5F5E5A; font-family: Arial, sans-serif; }
+  </style>
+</defs>
+
+<!-- PARTICIPANTS -->
+<g class="p-gray">
+  <rect x="12" y="20" width="82" height="52" rx="8" stroke-width="0.5"/>
+  <text class="th" x="53" y="42" text-anchor="middle" dominant-baseline="central">HR team</text>
+  <text class="ts" x="53" y="62" text-anchor="middle" dominant-baseline="central">Onboarding</text>
+</g>
+<g class="p-purple">
+  <rect x="106" y="20" width="86" height="52" rx="8" stroke-width="0.5"/>
+  <text class="th" x="149" y="42" text-anchor="middle" dominant-baseline="central">App</text>
+  <text class="ts" x="149" y="62" text-anchor="middle" dominant-baseline="central">Backend</text>
+</g>
+<g class="p-amber">
+  <rect x="204" y="20" width="96" height="52" rx="8" stroke-width="0.5"/>
+  <text class="th" x="252" y="42" text-anchor="middle" dominant-baseline="central">Supabase</text>
+  <text class="ts" x="252" y="62" text-anchor="middle" dominant-baseline="central">Auth / attrs</text>
+</g>
+<g class="p-teal">
+  <rect x="312" y="20" width="96" height="52" rx="8" stroke-width="0.5"/>
+  <text class="th" x="360" y="42" text-anchor="middle" dominant-baseline="central">Candidate</text>
+  <text class="ts" x="360" y="62" text-anchor="middle" dominant-baseline="central">New hire</text>
+</g>
+<g class="p-green">
+  <rect x="420" y="20" width="98" height="52" rx="8" stroke-width="0.5"/>
+  <text class="th" x="469" y="42" text-anchor="middle" dominant-baseline="central">IAM DB</text>
+  <text class="ts" x="469" y="62" text-anchor="middle" dominant-baseline="central">Identity SoT</text>
+</g>
+<g class="p-coral">
+  <rect x="530" y="20" width="100" height="52" rx="8" stroke-width="0.5"/>
+  <text class="th" x="580" y="42" text-anchor="middle" dominant-baseline="central">IAM Solution</text>
+  <text class="ts" x="580" y="62" text-anchor="middle" dominant-baseline="central">Provisioning</text>
+</g>
+
+<!-- LIFELINES -->
+<line class="lifeline" x1="53"  y1="72" x2="53"  y2="526"/>
+<line class="lifeline" x1="149" y1="72" x2="149" y2="526"/>
+<line class="lifeline" x1="252" y1="72" x2="252" y2="526"/>
+<line class="lifeline" x1="360" y1="72" x2="360" y2="526"/>
+<line class="lifeline" x1="469" y1="72" x2="469" y2="526"/>
+<line class="lifeline" x1="580" y1="72" x2="580" y2="526"/>
+
+<!-- 1. HR → App -->
+<text class="arr-label" x="101" y="93" text-anchor="middle">Submit email address</text>
+<line x1="57" y1="101" x2="145" y2="101" class="arr" marker-end="url(#arrow)"/>
+
+<!-- 2. App internal: create magic link -->
+<g class="box-purple">
+  <rect x="110" y="111" width="78" height="26" rx="4" stroke-width="0.5"/>
+  <text class="ts" x="149" y="124" text-anchor="middle" dominant-baseline="central">Create link</text>
+</g>
+
+<!-- 3. App → Candidate: email -->
+<text class="arr-label" x="255" y="153" text-anchor="middle">Magic link + form (email)</text>
+<line x1="153" y1="161" x2="356" y2="161" class="arr" marker-end="url(#arrow)"/>
+
+<!-- 4. Candidate → App: click link -->
+<text class="arr-label" x="255" y="177" text-anchor="middle">Click magic link</text>
+<line x1="356" y1="185" x2="153" y2="185" class="arr" marker-end="url(#arrow)"/>
+
+<!-- ALT: error block -->
+<rect class="alt-border" x="38" y="197" width="380" height="122" rx="4"/>
+<text class="alt-label" x="46" y="211">Error: link invalid or expired</text>
+
+<!-- 4a. App → Candidate: error -->
+<text class="arr-label" x="255" y="226" text-anchor="middle">Auth error shown</text>
+<line x1="153" y1="234" x2="356" y2="234" class="arr" marker-end="url(#arrow)"/>
+
+<!-- 4b. App → HR: notify -->
+<text class="arr-label" x="101" y="248" text-anchor="middle">Notify: reissue</text>
+<line x1="145" y1="256" x2="57"  y2="256" class="arr" marker-end="url(#arrow)"/>
+
+<!-- 4c. HR → App: reissue -->
+<text class="arr-label" x="101" y="270" text-anchor="middle">Reissue</text>
+<line x1="57"  y1="278" x2="145" y2="278" class="arr" marker-end="url(#arrow)"/>
+
+<!-- 4d. App → Candidate: new link -->
+<text class="arr-label" x="255" y="294" text-anchor="middle">New magic link email</text>
+<line x1="153" y1="302" x2="356" y2="302" class="arr" marker-end="url(#arrow)"/>
+
+<!-- 5. App → Supabase -->
+<text class="arr-label" x="201" y="334" text-anchor="middle">Fetch attributes</text>
+<line x1="153" y1="342" x2="248" y2="342" class="arr" marker-end="url(#arrow)"/>
+
+<!-- 6. Supabase → App -->
+<text class="arr-label" x="201" y="354" text-anchor="middle">Attributes token</text>
+<line x1="248" y1="362" x2="153" y2="362" class="arr" marker-end="url(#arrow)"/>
+
+<!-- 7. App → Candidate: pre-pop form -->
+<text class="arr-label" x="255" y="378" text-anchor="middle">Pre-populated form</text>
+<line x1="153" y1="386" x2="356" y2="386" class="arr" marker-end="url(#arrow)"/>
+
+<!-- 8. Candidate → App: submit -->
+<text class="arr-label" x="255" y="402" text-anchor="middle">Submit form</text>
+<line x1="356" y1="410" x2="153" y2="410" class="arr" marker-end="url(#arrow)"/>
+
+<!-- 9. App → IAM DB -->
+<text class="arr-label" x="311" y="426" text-anchor="middle">Insert identity record</text>
+<line x1="153" y1="434" x2="465" y2="434" class="arr" marker-end="url(#arrow)"/>
+
+<!-- 10. App → HR: notify -->
+<text class="arr-label" x="101" y="450" text-anchor="middle">Notify HR (email + app)</text>
+<line x1="145" y1="458" x2="57"  y2="458" class="arr" marker-end="url(#arrow)"/>
+
+<!-- 11. IAM DB → IAM Solution -->
+<text class="arr-label" x="525" y="486" text-anchor="middle">Trigger import</text>
+<line x1="473" y1="494" x2="576" y2="494" class="arr" marker-end="url(#arrow)"/>
+
+<!-- IAM Solution: provision -->
+<g class="box-coral">
+  <rect x="534" y="504" width="92" height="26" rx="4" stroke-width="0.5"/>
+  <text class="ts" x="580" y="517" text-anchor="middle" dominant-baseline="central">Provision user</text>
+</g>
+
+</svg>

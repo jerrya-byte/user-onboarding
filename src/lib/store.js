@@ -1,10 +1,27 @@
-// Mock backend: persists onboarding requests + notifications in localStorage.
-// Simulates the App Backend described in the HLD.
+// Dual-mode backend:
+//
+//   1. Supabase (real) — when VITE_SUPABASE_URL + VITE_SUPABASE_ANON_KEY
+//      are set. HR requests persist in the `onboarding_requests` table,
+//      candidate magic links are real Supabase Auth magic-link emails,
+//      and candidate submissions insert into the `identity_records`
+//      table (the Source of Truth). See SUPABASE_SETUP.md.
+//
+//   2. localStorage mock (fallback) — original prototype behaviour
+//      when Supabase keys aren't configured. Lets the app run offline
+//      and demo without any backend.
+//
+// All exports are async. Pages using them must `await` (they already
+// use useEffect for data loading).
+
+import { supabase, hasSupabase } from './supabase';
+
+// ─────────────────────────────────────────────────────────────
+// Shared helpers
+// ─────────────────────────────────────────────────────────────
 
 const KEY_REQUESTS = 'onboarding.requests.v1';
 const KEY_NOTIFS   = 'onboarding.notifications.v1';
 
-// ─── Helpers ───
 const now = () => new Date().toISOString();
 
 function uuid() {
@@ -28,9 +45,30 @@ function write(key, value) {
   localStorage.setItem(key, JSON.stringify(value));
 }
 
-// ─── Magic link tokens ───
-// Base64-url encodes a signed-ish payload. This is a mock — a real backend
-// would HMAC this. Fine for prototype: it's readable + reversible.
+// Random-ish invitation code: OB-YYYY-XXXX
+function generateInviteCode() {
+  const year = new Date().getFullYear();
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let s = '';
+  for (let i = 0; i < 4; i++) s += chars[Math.floor(Math.random() * chars.length)];
+  return `OB-${year}-${s}`;
+}
+
+function generateReference() {
+  return `OB-${new Date().getFullYear()}-${
+    Math.floor(Math.random() * 90000) + 10000
+  }`;
+}
+
+// ─────────────────────────────────────────────────────────────
+// Magic-link tokens (mock-mode only)
+// ─────────────────────────────────────────────────────────────
+// Base64-url encodes a signed-ish payload. This is a mock — a real
+// backend would HMAC this. In Supabase mode, the real magic-link is
+// issued by Supabase Auth and this token is not used for verification;
+// we still store it as a fake preview value so the HR "Preview Link"
+// button remains functional.
+
 function b64urlEncode(obj) {
   const json = JSON.stringify(obj);
   return btoa(unescape(encodeURIComponent(json)))
@@ -57,57 +95,235 @@ export function parseMagicLinkToken(token) {
   return { ok: true, payload };
 }
 
-// Random-ish invitation code: OB-YYYY-XXXX
-function generateInviteCode() {
-  const year = new Date().getFullYear();
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  let s = '';
-  for (let i = 0; i < 4; i++) s += chars[Math.floor(Math.random() * chars.length)];
-  return `OB-${year}-${s}`;
+// ─────────────────────────────────────────────────────────────
+// Supabase row ⇄ app object mapping
+// ─────────────────────────────────────────────────────────────
+
+function fromSupabase(row) {
+  if (!row) return null;
+  return {
+    id: row.id,
+    status: row.status,
+    createdAt: row.created_at,
+    linkSentAt: row.link_sent_at,
+    expiresAt: row.expires_at,
+    inviteCode: row.invite_code,
+    // Magic token is only meaningful in mock mode — in Supabase mode
+    // the real auth token is in the email. We leave a preview token
+    // so the "Preview Link" button in the dashboard still works (it
+    // just dumps the candidate straight to the auth landing page).
+    magicToken: row.magic_token || buildMagicLinkToken(
+      row.id,
+      row.email,
+      row.expires_at ? new Date(row.expires_at).getTime() : Date.now() + 72 * 3600 * 1000,
+    ),
+    givenName: row.given_name,
+    familyName: row.family_name,
+    email: row.email,
+    position: row.position,
+    level: row.level,
+    division: row.division,
+    commencement: row.commencement,
+    managerName: row.manager_name,
+    managerEmail: row.manager_email,
+    managerPosition: row.manager_position,
+    location: row.location,
+    reissueHistory: row.reissue_history || [],
+    submission: row.submitted_at
+      ? { submittedAt: row.submitted_at, reference: row.reference }
+      : null,
+  };
 }
 
-// ─── Requests ───
-export function listRequests() {
+function toSupabase(input) {
+  return {
+    given_name: input.givenName,
+    family_name: input.familyName,
+    email: input.email,
+    position: input.position,
+    level: input.level,
+    division: input.division,
+    commencement: input.commencement || null,
+    manager_name: input.managerName,
+    manager_email: input.managerEmail,
+    manager_position: input.managerPosition,
+    location: input.location,
+  };
+}
+
+// ─────────────────────────────────────────────────────────────
+// Requests — public API
+// ─────────────────────────────────────────────────────────────
+
+export async function listRequests() {
+  if (hasSupabase) {
+    const { data, error } = await supabase
+      .from('onboarding_requests')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (error) {
+      console.error('[store] listRequests failed:', error);
+      return [];
+    }
+    return (data || []).map(fromSupabase);
+  }
   return read(KEY_REQUESTS, []);
 }
 
-export function getRequest(id) {
-  return listRequests().find((r) => r.id === id) || null;
+export async function getRequest(id) {
+  if (!id) return null;
+  if (hasSupabase) {
+    const { data, error } = await supabase
+      .from('onboarding_requests')
+      .select('*')
+      .eq('id', id)
+      .maybeSingle();
+    if (error) {
+      console.error('[store] getRequest failed:', error);
+      return null;
+    }
+    return fromSupabase(data);
+  }
+  return read(KEY_REQUESTS, []).find((r) => r.id === id) || null;
 }
 
-export function createRequest(input, { validityHours = 72 } = {}) {
-  const id = uuid();
-  const createdAt = now();
+// Look up a request by candidate email — used when the candidate clicks
+// the magic link and we don't know the request_id in the URL (Supabase
+// mode preserves query params, so we usually do, but this is a safety net).
+export async function getRequestByEmail(email) {
+  if (!email) return null;
+  if (hasSupabase) {
+    const { data, error } = await supabase
+      .from('onboarding_requests')
+      .select('*')
+      .ilike('email', email)
+      .order('created_at', { ascending: false })
+      .limit(1);
+    if (error || !data || data.length === 0) return null;
+    return fromSupabase(data[0]);
+  }
+  return (
+    read(KEY_REQUESTS, []).find(
+      (r) => r.email?.toLowerCase() === email.toLowerCase(),
+    ) || null
+  );
+}
+
+/**
+ * Create a new onboarding request. In Supabase mode this also triggers
+ * a real magic-link email to the candidate via Supabase Auth.
+ *
+ * @returns {Promise<{request: object, magicLinkEmailSent: boolean, emailError: string|null}>}
+ */
+export async function createRequest(input, { validityHours = 72 } = {}) {
   const expiresAtMs = Date.now() + validityHours * 60 * 60 * 1000;
+  const inviteCode = generateInviteCode();
+
+  if (hasSupabase) {
+    const row = {
+      ...toSupabase(input),
+      status: 'link_sent',
+      link_sent_at: now(),
+      expires_at: new Date(expiresAtMs).toISOString(),
+      invite_code: inviteCode,
+      reissue_history: [],
+    };
+    const { data, error } = await supabase
+      .from('onboarding_requests')
+      .insert(row)
+      .select()
+      .single();
+    if (error) {
+      console.error('[store] createRequest insert failed:', error);
+      throw new Error(`Could not save request: ${error.message}`);
+    }
+    const request = fromSupabase(data);
+
+    // Send the real magic-link email via Supabase Auth.
+    const emailResult = await sendMagicLink(request);
+    return {
+      request,
+      magicLinkEmailSent: emailResult.ok,
+      emailError: emailResult.error,
+    };
+  }
+
+  // --- localStorage fallback ---
+  const id = uuid();
   const request = {
     id,
-    status: 'link_sent', // link_sent | pending | completed | expired
-    createdAt,
-    linkSentAt: createdAt,
+    status: 'link_sent',
+    createdAt: now(),
+    linkSentAt: now(),
     expiresAt: new Date(expiresAtMs).toISOString(),
-    inviteCode: generateInviteCode(),
-    magicToken: null, // set below
+    inviteCode,
+    magicToken: buildMagicLinkToken(id, input.email, expiresAtMs),
     submission: null,
     reissueHistory: [],
-    ...input, // { givenName, familyName, email, position, level, division, commencement, managerName, managerEmail, managerPosition, location }
+    ...input,
   };
-  request.magicToken = buildMagicLinkToken(id, input.email, expiresAtMs);
-
-  const all = listRequests();
+  const all = read(KEY_REQUESTS, []);
   all.unshift(request);
   write(KEY_REQUESTS, all);
-
   addNotification({
     kind: 'link_sent',
     title: `Link sent — ${input.givenName} ${input.familyName}`,
-    body: 'Onboarding email delivered to candidate.',
+    body: 'Onboarding email delivered to candidate (prototype — no real email).',
     requestId: id,
   });
-  return request;
+  return { request, magicLinkEmailSent: false, emailError: null };
 }
 
-export function updateRequest(id, patch) {
-  const all = listRequests();
+/**
+ * Send (or re-send) a real Supabase magic-link email for a request.
+ * The email redirects the candidate to /candidate/auth?request_id=<id>
+ * where our client detects the Supabase session and forwards them
+ * to the onboarding form.
+ */
+async function sendMagicLink(request) {
+  if (!hasSupabase) return { ok: false, error: 'Supabase not configured' };
+  const redirectTo = `${window.location.origin}/candidate/auth?request_id=${request.id}`;
+  const { error } = await supabase.auth.signInWithOtp({
+    email: request.email,
+    options: {
+      emailRedirectTo: redirectTo,
+      shouldCreateUser: true,
+    },
+  });
+  if (error) {
+    console.error('[store] signInWithOtp failed:', error);
+    return { ok: false, error: error.message };
+  }
+  return { ok: true, error: null };
+}
+
+export async function updateRequest(id, patch) {
+  if (hasSupabase) {
+    const row = {};
+    // Map camelCase → snake_case for the few fields we update.
+    if ('status' in patch) row.status = patch.status;
+    if ('email' in patch) row.email = patch.email;
+    if ('inviteCode' in patch) row.invite_code = patch.inviteCode;
+    if ('magicToken' in patch) row.magic_token = patch.magicToken;
+    if ('linkSentAt' in patch) row.link_sent_at = patch.linkSentAt;
+    if ('expiresAt' in patch) row.expires_at = patch.expiresAt;
+    if ('reissueHistory' in patch) row.reissue_history = patch.reissueHistory;
+    if ('submittedAt' in patch) row.submitted_at = patch.submittedAt;
+    if ('reference' in patch) row.reference = patch.reference;
+    const { data, error } = await supabase
+      .from('onboarding_requests')
+      .update(row)
+      .eq('id', id)
+      .select()
+      .single();
+    if (error) {
+      console.error('[store] updateRequest failed:', error);
+      return null;
+    }
+    return fromSupabase(data);
+  }
+
+  const all = read(KEY_REQUESTS, []);
   const idx = all.findIndex((r) => r.id === id);
   if (idx < 0) return null;
   all[idx] = { ...all[idx], ...patch };
@@ -115,89 +331,148 @@ export function updateRequest(id, patch) {
   return all[idx];
 }
 
-export function reissueRequest(id, { validityHours = 72, reason, note, updatedEmail } = {}) {
-  const req = getRequest(id);
-  if (!req) return null;
+export async function reissueRequest(
+  id,
+  { validityHours = 72, reason, note, updatedEmail } = {},
+) {
+  const existing = await getRequest(id);
+  if (!existing) return null;
 
   const expiresAtMs = Date.now() + validityHours * 60 * 60 * 1000;
-  const email = updatedEmail || req.email;
-  const token = buildMagicLinkToken(id, email, expiresAtMs);
+  const email = updatedEmail || existing.email;
   const inviteCode = generateInviteCode();
-
   const entry = {
     issued: now(),
     expiry: new Date(expiresAtMs).toISOString(),
     reason: reason || 'Link expired',
     note: note || '',
-    previousExpiry: req.expiresAt,
+    previousExpiry: existing.expiresAt,
   };
 
-  const updated = updateRequest(id, {
+  const updated = await updateRequest(id, {
     email,
-    magicToken: token,
     inviteCode,
     expiresAt: entry.expiry,
     linkSentAt: entry.issued,
     status: 'link_sent',
-    reissueHistory: [...(req.reissueHistory || []), entry],
+    reissueHistory: [...(existing.reissueHistory || []), entry],
+    magicToken: buildMagicLinkToken(id, email, expiresAtMs),
   });
 
-  addNotification({
-    kind: 'link_sent',
-    title: `Link reissued — ${req.givenName} ${req.familyName}`,
-    body: `New magic link issued (${validityHours}h validity).`,
-    requestId: id,
-  });
+  if (hasSupabase && updated) {
+    const emailResult = await sendMagicLink(updated);
+    if (!emailResult.ok) {
+      console.warn('[store] reissue email failed:', emailResult.error);
+    }
+  } else {
+    addNotification({
+      kind: 'link_sent',
+      title: `Link reissued — ${existing.givenName} ${existing.familyName}`,
+      body: `New magic link issued (${validityHours}h validity).`,
+      requestId: id,
+    });
+  }
   return updated;
 }
 
-export function submitCandidateForm(id, formData) {
-  const req = getRequest(id);
-  if (!req) return null;
+/**
+ * Candidate submits the onboarding form. In Supabase mode this:
+ *   1. Inserts a full row into `identity_records` (Source of Truth)
+ *   2. Marks the matching `onboarding_requests` row as completed
+ *
+ * In mock mode it stores the submission blob on the request in-place.
+ */
+export async function submitCandidateForm(id, formData) {
+  const reference = generateReference();
+  const submittedAt = now();
 
-  const reference = `OB-${new Date().getFullYear()}-${String(
-    Math.floor(Math.random() * 90000) + 10000
-  )}`;
-
-  const updated = updateRequest(id, {
-    status: 'completed',
-    submission: {
-      ...formData,
-      submittedAt: now(),
+  if (hasSupabase) {
+    const req = await getRequest(id);
+    if (!req) return null;
+    // 1) Write to Source of Truth.
+    const row = {
+      request_id: id,
       reference,
-    },
-  });
+      submitted_at: submittedAt,
+      given_name: formData.givenName,
+      family_name: formData.familyName,
+      preferred_name: formData.preferredName || null,
+      dob: formData.dob || null,
+      email: req.email,
+      position: formData.position,
+      level: formData.level,
+      division: formData.division,
+      commencement: formData.commencement || null,
+      manager_name: formData.managerName,
+      location: formData.location,
+      mobile: formData.mobile,
+      emergency_name: formData.emergencyName,
+      emergency_phone: formData.emergencyPhone,
+      relationship: formData.relationship || null,
+      tfn: formData.tfn,
+      bank: formData.bank,
+    };
+    const { error: insertErr } = await supabase
+      .from('identity_records')
+      .insert(row);
+    if (insertErr) {
+      console.error('[store] identity_records insert failed:', insertErr);
+      throw new Error(`Could not save identity record: ${insertErr.message}`);
+    }
+    // 2) Mark request completed + stamp reference.
+    const updated = await updateRequest(id, {
+      status: 'completed',
+      submittedAt,
+      reference,
+    });
+    return updated;
+  }
 
+  const existing = read(KEY_REQUESTS, []).find((r) => r.id === id);
+  if (!existing) return null;
+  const updated = {
+    ...existing,
+    status: 'completed',
+    submission: { ...formData, submittedAt, reference },
+  };
+  const all = read(KEY_REQUESTS, []).map((r) => (r.id === id ? updated : r));
+  write(KEY_REQUESTS, all);
   addNotification({
     kind: 'completed',
-    title: `Form completed — ${req.givenName} ${req.familyName}`,
+    title: `Form completed — ${existing.givenName} ${existing.familyName}`,
     body: 'Onboarding form submitted. Identity record written to IAM DB.',
     requestId: id,
   });
   return updated;
 }
 
-// Refresh derived status for expired links. Call from dashboard load.
-export function refreshStatuses() {
-  const all = listRequests();
-  let changed = false;
-  for (const r of all) {
-    if (r.status === 'link_sent' && Date.now() > new Date(r.expiresAt).getTime()) {
-      r.status = 'expired';
-      changed = true;
-      addNotification({
-        kind: 'expired',
-        title: `Link expired — ${r.givenName} ${r.familyName}`,
-        body: 'Magic link expired without completion. Action required.',
-        requestId: r.id,
-      });
-    }
+/** Mark requests whose expires_at is in the past as 'expired'. */
+export async function refreshStatuses() {
+  const all = await listRequests();
+  const nowMs = Date.now();
+  const stale = all.filter(
+    (r) =>
+      r.status === 'link_sent' &&
+      r.expiresAt &&
+      nowMs > new Date(r.expiresAt).getTime(),
+  );
+  for (const r of stale) {
+    await updateRequest(r.id, { status: 'expired' });
+    addNotification({
+      kind: 'expired',
+      title: `Link expired — ${r.givenName} ${r.familyName}`,
+      body: 'Magic link expired without completion. Action required.',
+      requestId: r.id,
+    });
   }
-  if (changed) write(KEY_REQUESTS, all);
-  return all;
+  return listRequests();
 }
 
-// ─── Notifications ───
+// ─────────────────────────────────────────────────────────────
+// Notifications — ephemeral, localStorage only
+// (HR UI notifications don't need to sync across devices.)
+// ─────────────────────────────────────────────────────────────
+
 export function listNotifications() {
   return read(KEY_NOTIFS, []);
 }
@@ -210,7 +485,6 @@ export function addNotification(n) {
     read: false,
     ...n,
   });
-  // keep last 40
   write(KEY_NOTIFS, all.slice(0, 40));
 }
 
@@ -219,9 +493,13 @@ export function markAllNotificationsRead() {
   write(KEY_NOTIFS, all);
 }
 
-// ─── Seed (for empty dashboard demo) ───
-export function seedIfEmpty() {
-  if (listRequests().length > 0) return;
+// ─────────────────────────────────────────────────────────────
+// Seed — mock-mode only.
+// ─────────────────────────────────────────────────────────────
+
+export async function seedIfEmpty() {
+  if (hasSupabase) return; // never seed real DB with demo rows
+  if (read(KEY_REQUESTS, []).length > 0) return;
 
   const sample = [
     {
@@ -254,31 +532,28 @@ export function seedIfEmpty() {
       division: 'Cyber Security Operations', commencement: '2026-04-07',
       managerName: 'Brendan Walsh', managerEmail: 'b.walsh@agency.gov.au',
       managerPosition: 'Director, Cyber Operations', location: 'Canberra ACT',
-      // created in the past so link is already expired
       status: 'expired',
-      __backdate: 1000 * 60 * 60 * 24 * 7, // 7 days ago
+      __backdate: 1000 * 60 * 60 * 24 * 7,
     },
   ];
 
   for (const s of sample) {
-    const req = createRequest(s, { validityHours: 72 });
+    const { request } = await createRequest(s, { validityHours: 72 });
     if (s.__backdate) {
       const ts = Date.now() - s.__backdate;
-      updateRequest(req.id, {
+      await updateRequest(request.id, {
         createdAt: new Date(ts).toISOString(),
         linkSentAt: new Date(ts).toISOString(),
         expiresAt: new Date(ts + 72 * 3600 * 1000).toISOString(),
         status: 'expired',
       });
     } else if (s.status) {
-      updateRequest(req.id, { status: s.status });
+      await updateRequest(request.id, { status: s.status });
     }
     if (s.status === 'completed') {
-      updateRequest(req.id, {
-        submission: {
-          submittedAt: now(),
-          reference: `OB-2026-${10000 + Math.floor(Math.random() * 89999)}`,
-        },
+      await updateRequest(request.id, {
+        submittedAt: now(),
+        reference: generateReference(),
       });
     }
   }

@@ -22,3 +22,14 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Local environment / secrets — NEVER commit these
+.env
+.env.local
+.env.*.local
+
+# Personal notes / scratch files (may contain secrets)
+Notes.txt
+New Text Document.txt
+*.notes.txt
+

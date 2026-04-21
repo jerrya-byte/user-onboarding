@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import HRLayout from '../../components/HRLayout';
 import { Card, Breadcrumb, PageHeader } from '../../components/Card';
@@ -6,6 +6,7 @@ import { Field, TextInput, SelectInput, TextArea } from '../../components/Field'
 import Alert from '../../components/Alert';
 import Tag from '../../components/Tag';
 import { getRequest, listRequests, reissueRequest } from '../../lib/store';
+import { hasSupabase } from '../../lib/supabase';
 import { formatDate } from '../../lib/format';
 
 const REASONS = [
@@ -25,16 +26,49 @@ export default function ReissueLink() {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  // Lazy init: resolve the request from URL id, or fall back to the first
-  // expired record so the chrome-nav "Reissue Link" tab is always demoable.
-  const [req] = useState(() => {
-    if (id) return getRequest(id);
-    return listRequests().find((r) => r.status === 'expired') || null;
-  });
+  const [req, setReq] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [validity, setValidity] = useState(72);
   const [reason, setReason] = useState(REASONS[0]);
   const [note, setNote] = useState('');
   const [updatedEmail, setUpdatedEmail] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      let resolved = null;
+      if (id) {
+        resolved = await getRequest(id);
+      } else {
+        const all = await listRequests();
+        resolved = all.find((r) => r.status === 'expired') || null;
+      }
+      if (!cancelled) {
+        setReq(resolved);
+        setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
+
+  if (loading) {
+    return (
+      <HRLayout>
+        <Breadcrumb
+          items={[
+            { label: 'Home', href: '#' },
+            { label: 'Dashboard', href: '#' },
+            { label: 'Reissue Magic Link' },
+          ]}
+        />
+        <PageHeader title="Reissue Magic Link" subtitle="Loading…" />
+      </HRLayout>
+    );
+  }
 
   if (!req) {
     return (
@@ -61,14 +95,24 @@ export default function ReissueLink() {
     );
   }
 
-  const onReissue = () => {
-    const updated = reissueRequest(req.id, {
-      validityHours: validity,
-      reason,
-      note,
-      updatedEmail: updatedEmail || undefined,
-    });
-    navigate(`/hr/dashboard?justCreated=${updated.id}`);
+  const onReissue = async () => {
+    setSubmitting(true);
+    setError('');
+    try {
+      const updated = await reissueRequest(req.id, {
+        validityHours: validity,
+        reason,
+        note,
+        updatedEmail: updatedEmail || undefined,
+      });
+      const params = new URLSearchParams({ justCreated: updated.id });
+      if (hasSupabase) params.set('emailSent', '1');
+      navigate(`/hr/dashboard?${params.toString()}`);
+    } catch (err) {
+      console.error(err);
+      setError(err.message || 'Failed to reissue link.');
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -84,6 +128,8 @@ export default function ReissueLink() {
         title="Reissue Magic Link"
         subtitle="The candidate's previous magic link has expired. Review the details below and issue a new link."
       />
+
+      {error && <Alert kind="error">{error}</Alert>}
 
       <Alert kind="error">
         <strong>Magic link expired</strong> — The link sent to {req.givenName}{' '}
@@ -184,12 +230,13 @@ export default function ReissueLink() {
           </Card>
 
           <div className="flex gap-3 mt-6">
-            <button className="gov-btn gov-btn-danger" onClick={onReissue}>
-              Reissue Magic Link
+            <button className="gov-btn gov-btn-danger" onClick={onReissue} disabled={submitting}>
+              {submitting ? 'Sending…' : 'Reissue Magic Link'}
             </button>
             <button
               className="gov-btn gov-btn-secondary"
               onClick={() => navigate('/hr/dashboard')}
+              disabled={submitting}
             >
               Cancel
             </button>
