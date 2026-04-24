@@ -13,45 +13,23 @@ export default function LoginScreen() {
     setError('');
     setSigningIn(true);
     try {
-      console.log('[LoginScreen] calling loginPopup…');
-      const result = await instance.loginPopup(LOGIN_REQUEST);
-      console.log('[LoginScreen] loginPopup resolved. account:', result?.account?.username, 'all accounts now:', instance.getAllAccounts().map(a => a.username));
-
-      // Belt-and-braces: explicitly mark the returned account as active.
-      const account = result?.account || instance.getAllAccounts()[0];
-      if (account) {
-        instance.setActiveAccount(account);
-        console.log('[LoginScreen] set active account:', account.username);
-      } else {
-        console.warn('[LoginScreen] no account on loginPopup result and no cached accounts!');
-      }
-
-      // Hard-navigate (rather than relying on React state propagation
-      // from inside the popup callback). This forces a fresh app boot
-      // where MSAL hydrates from cache, ProtectedRoute sees the cached
-      // account, and the dashboard renders cleanly.
-      console.log('[LoginScreen] navigating to /hr/dashboard');
-      window.location.assign('/hr/dashboard');
+      console.log('[LoginScreen] calling loginRedirect…');
+      // loginRedirect navigates the entire window to Microsoft and never
+      // resolves on this page — the user comes back via main.jsx's
+      // handleRedirectPromise. So we don't need any post-login navigation
+      // code here.
+      await instance.loginRedirect(LOGIN_REQUEST);
     } catch (err) {
       console.error('Sign-in failed:', err);
-      // user-cancelled popups are common — keep the message gentle
-      if (err && (err.errorCode === 'user_cancelled' || err.errorCode === 'popup_window_error')) {
-        setError(
-          err.errorCode === 'user_cancelled'
-            ? 'Sign-in was cancelled. Click the button to try again.'
-            : 'Your browser blocked the sign-in popup. Please allow popups for this site and try again.'
-        );
-      } else {
-        setError(
-          err?.message ||
-            'Sign-in failed. Please try again, or contact your IT administrator.'
-        );
-      }
+      setError(
+        err?.message ||
+          'Sign-in failed. Please try again, or contact your IT administrator.'
+      );
       setSigningIn(false);
     }
   };
 
-  const busy = signingIn || inProgress === 'login';
+  const busy = signingIn || inProgress === 'login' || inProgress === 'handleRedirect';
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -94,7 +72,7 @@ export default function LoginScreen() {
                          text-[14px] font-semibold text-ink"
             >
               <MicrosoftLogo />
-              {busy ? 'Signing in…' : 'Sign in with Microsoft'}
+              {busy ? 'Redirecting to Microsoft…' : 'Sign in with Microsoft'}
             </button>
 
             <div className="mt-6 pt-5 border-t border-border text-center">

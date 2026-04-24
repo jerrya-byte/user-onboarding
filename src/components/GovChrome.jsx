@@ -68,12 +68,12 @@ function SignedInUser() {
   const initials = getInitials(displayName);
 
   const onSignOut = () => {
+    // Use logoutRedirect to match the loginRedirect flow — full-page
+    // navigation to Microsoft's logout endpoint, then back to our origin
+    // where the user will see the LoginScreen because they're signed out.
     instance
-      .logoutPopup({
-        // After logout, send the user back to the app root (which will
-        // immediately render LoginScreen because they're now signed out).
+      .logoutRedirect({
         postLogoutRedirectUri: window.location.origin,
-        mainWindowRedirectUri: window.location.origin,
       })
       .catch((err) => {
         console.error('Sign-out failed:', err);
