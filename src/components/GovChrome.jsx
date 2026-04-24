@@ -130,17 +130,8 @@ function HRNav() {
     <div className="bg-navy-light px-8 flex gap-0.5 overflow-x-auto">
       <NavLink to="/hr/new" className={navClass}>HR · Submit Email</NavLink>
       <NavLink to="/hr/dashboard" className={navClass}>HR · Dashboard</NavLink>
+      <NavLink to="/hr/identities" className={navClass}>HR · Identities</NavLink>
       <ReissueNavLink />
-      <div className="w-px bg-[#2E4A6A] mx-2 my-1.5" />
-      <NavLink to="/candidate/auth" className={navClass}>
-        Candidate · Auth Landing
-      </NavLink>
-      <NavLink to="/candidate/form" className={navClass}>
-        Candidate · Onboarding Form
-      </NavLink>
-      <NavLink to="/candidate/done" className={navClass}>
-        Candidate · Confirmation
-      </NavLink>
     </div>
   );
 }

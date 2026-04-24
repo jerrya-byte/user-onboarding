@@ -209,6 +209,87 @@ export async function getRequestByEmail(email) {
   );
 }
 
+// ─────────────────────────────────────────────────────────────
+// Identity records — completed candidate submissions.
+// ─────────────────────────────────────────────────────────────
+
+function fromIdentityRecord(row) {
+  if (!row) return null;
+  // Deliberately exclude `id` and `request_id` from the shape returned
+  // to UI components — those are internal plumbing. We do keep them on
+  // a hidden symbol-style key so action handlers (e.g. reissue) can
+  // still resolve back to the underlying request.
+  return {
+    requestId: row.request_id || null,
+    reference: row.reference,
+    submittedAt: row.submitted_at,
+    givenName: row.given_name,
+    familyName: row.family_name,
+    preferredName: row.preferred_name,
+    dob: row.dob,
+    position: row.position,
+    level: row.level,
+    division: row.division,
+    commencement: row.commencement,
+    managerName: row.manager_name,
+    location: row.location,
+    identityState: row.identity_state,
+    email: row.email,
+    mobile: row.mobile,
+    emergencyName: row.emergency_name,
+    emergencyPhone: row.emergency_phone,
+    relationship: row.relationship,
+    tfn: row.tfn,
+    onboardingStatus: row.onboarding_status,
+  };
+}
+
+/**
+ * List all identity records (completed onboarding submissions).
+ * In mock mode, derive them from the in-memory requests with submissions.
+ */
+export async function listIdentityRecords() {
+  if (hasSupabase) {
+    const { data, error } = await supabase
+      .from('identity_records')
+      .select('*')
+      .order('submitted_at', { ascending: false });
+    if (error) {
+      console.error('[store] listIdentityRecords failed:', error);
+      return [];
+    }
+    return (data || []).map(fromIdentityRecord);
+  }
+
+  // Mock-mode: derive from completed requests' submission blob.
+  const all = read(KEY_REQUESTS, []);
+  return all
+    .filter((r) => r.submission)
+    .map((r) => ({
+      requestId: r.id,
+      reference: r.submission.reference,
+      submittedAt: r.submission.submittedAt,
+      givenName: r.submission.givenName || r.givenName,
+      familyName: r.submission.familyName || r.familyName,
+      preferredName: r.submission.preferredName || null,
+      dob: r.submission.dob || null,
+      position: r.submission.position || r.position,
+      level: r.submission.level || r.level,
+      division: r.submission.division || r.division,
+      commencement: r.submission.commencement || r.commencement,
+      managerName: r.submission.managerName || r.managerName,
+      location: r.submission.location || r.location,
+      identityState: null,
+      email: r.email,
+      mobile: r.submission.mobile || null,
+      emergencyName: r.submission.emergencyName || null,
+      emergencyPhone: r.submission.emergencyPhone || null,
+      relationship: r.submission.relationship || null,
+      tfn: r.submission.tfn || null,
+      onboardingStatus: 'uncommitted',
+    }));
+}
+
 /**
  * Create a new onboarding request. In Supabase mode this also triggers
  * a real magic-link email to the candidate via Supabase Auth.

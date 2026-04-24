@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import NewRequest from './pages/hr/NewRequest';
 import Dashboard from './pages/hr/Dashboard';
+import Identities from './pages/hr/Identities';
 import ReissueLink from './pages/hr/ReissueLink';
 import AuthLanding from './pages/candidate/AuthLanding';
 import OnboardingForm from './pages/candidate/OnboardingForm';
@@ -19,6 +20,7 @@ export default function App() {
         <Route path="/" element={<Navigate to="/hr/dashboard" replace />} />
         <Route path="/hr/new" element={hr(<NewRequest />)} />
         <Route path="/hr/dashboard" element={hr(<Dashboard />)} />
+        <Route path="/hr/identities" element={hr(<Identities />)} />
         <Route path="/hr/reissue" element={hr(<ReissueLink />)} />
         <Route path="/hr/reissue/:id" element={hr(<ReissueLink />)} />
         <Route path="/candidate/auth" element={<AuthLanding />} />
