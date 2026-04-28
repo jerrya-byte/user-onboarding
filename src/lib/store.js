@@ -215,11 +215,12 @@ export async function getRequestByEmail(email) {
 
 function fromIdentityRecord(row) {
   if (!row) return null;
-  // Deliberately exclude `id` and `request_id` from the shape returned
-  // to UI components — those are internal plumbing. We do keep them on
-  // a hidden symbol-style key so action handlers (e.g. reissue) can
-  // still resolve back to the underlying request.
+  // Per Jerry's spec, `id` and `request_id` are not displayed in any HR
+  // table. We do keep them on the returned object so action handlers
+  // (reissue, set termination date) can resolve back to the underlying
+  // record/request — the UI just doesn't render them as columns.
   return {
+    id: row.id,
     requestId: row.request_id || null,
     reference: row.reference,
     submittedAt: row.submitted_at,
@@ -241,7 +242,73 @@ function fromIdentityRecord(row) {
     relationship: row.relationship,
     tfn: row.tfn,
     onboardingStatus: row.onboarding_status,
+    terminationDate: row.termination_date,
   };
+}
+
+/**
+ * Update the termination_date on an identity_records row.
+ * The UI is responsible for validating that `date` is a future date —
+ * we still re-validate here so the rule isn't trusted only client-side.
+ *
+ * @param {string} id   identity_records.id (uuid)
+ * @param {string|null} date  ISO date string (YYYY-MM-DD), or null to clear
+ */
+export async function setTerminationDate(id, date) {
+  if (!id) throw new Error('Identity record id is required');
+
+  if (date != null) {
+    const parsed = new Date(date);
+    if (Number.isNaN(parsed.getTime())) {
+      throw new Error('Termination date is invalid.');
+    }
+    // Compare at day-level. We treat "today" as not-future so HR can't
+    // accidentally terminate someone effective immediately by clicking
+    // through the picker.
+    const startOfTomorrow = new Date();
+    startOfTomorrow.setHours(0, 0, 0, 0);
+    startOfTomorrow.setDate(startOfTomorrow.getDate() + 1);
+    if (parsed < startOfTomorrow) {
+      throw new Error('Termination date must be in the future.');
+    }
+  }
+
+  if (hasSupabase) {
+    const { data, error } = await supabase
+      .from('identity_records')
+      .update({ termination_date: date })
+      .eq('id', id)
+      .select()
+      .single();
+    if (error) {
+      console.error('[store] setTerminationDate failed:', error);
+      throw new Error(`Could not save termination date: ${error.message}`);
+    }
+    return fromIdentityRecord(data);
+  }
+
+  // Mock-mode: identity records are derived from requests in localStorage,
+  // so persist the termination_date on the matching request.submission.
+  const all = read(KEY_REQUESTS, []);
+  const idx = all.findIndex((r) => r.submission && r.id === id);
+  if (idx < 0) {
+    // The mock identities use the request_id as their id (because we
+    // synthesise them in listIdentityRecords above), so try that too.
+    const altIdx = all.findIndex((r) => r.id === id);
+    if (altIdx < 0) throw new Error('Identity record not found.');
+    all[altIdx] = {
+      ...all[altIdx],
+      submission: { ...(all[altIdx].submission || {}), terminationDate: date },
+    };
+    write(KEY_REQUESTS, all);
+    return null;
+  }
+  all[idx] = {
+    ...all[idx],
+    submission: { ...all[idx].submission, terminationDate: date },
+  };
+  write(KEY_REQUESTS, all);
+  return null;
 }
 
 /**
@@ -266,6 +333,10 @@ export async function listIdentityRecords() {
   return all
     .filter((r) => r.submission)
     .map((r) => ({
+      // In mock mode the identity record doesn't have its own uuid, so
+      // we surface the request id as both `id` and `requestId`. The
+      // Termination page only needs *something* unique to update.
+      id: r.id,
       requestId: r.id,
       reference: r.submission.reference,
       submittedAt: r.submission.submittedAt,
@@ -287,6 +358,7 @@ export async function listIdentityRecords() {
       relationship: r.submission.relationship || null,
       tfn: r.submission.tfn || null,
       onboardingStatus: 'uncommitted',
+      terminationDate: r.submission.terminationDate || null,
     }));
 }
 

@@ -131,6 +131,7 @@ function HRNav() {
       <NavLink to="/hr/new" className={navClass}>HR · Submit Email</NavLink>
       <NavLink to="/hr/dashboard" className={navClass}>HR · Dashboard</NavLink>
       <NavLink to="/hr/identities" className={navClass}>HR · Identities</NavLink>
+      <NavLink to="/hr/termination" className={navClass}>HR · Termination</NavLink>
       <ReissueNavLink />
     </div>
   );

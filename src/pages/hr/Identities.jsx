@@ -29,6 +29,7 @@ const COLUMNS = [
   { key: 'tfn',              label: 'TFN',                fmt: (v) => maskTfn(v) },
   { key: 'identityState',    label: 'Identity state' },
   { key: 'onboardingStatus', label: 'Onboarding status' },
+  { key: 'terminationDate',  label: 'Termination date',   fmt: (v) => formatDate(v) },
 ];
 
 // Mask the TFN to last 3 digits — full numbers are sensitive and HR
