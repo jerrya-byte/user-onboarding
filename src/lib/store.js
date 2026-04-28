@@ -428,24 +428,36 @@ export async function createRequest(input, { validityHours = 72 } = {}) {
 }
 
 /**
- * Send (or re-send) a real Supabase magic-link email for a request.
- * The email redirects the candidate to /candidate/auth?request_id=<id>
- * where our client detects the Supabase session and forwards them
- * to the onboarding form.
+ * Send (or re-send) a magic-link email for a request.
+ *
+ * Delivery is handled by the `send-magic-link` Edge Function, which:
+ *   1. Calls supabase.auth.admin.generateLink({ type: 'magiclink' }) to
+ *      MINT a Supabase Auth magic link without sending an email.
+ *   2. Sends that link via Resend (no daily cap like Supabase's built-in SMTP).
+ *
+ * The candidate-side flow is unchanged: they click the link, Supabase
+ * verifies the token, then redirects them to /candidate/auth where the
+ * client picks up the session and forwards them to the onboarding form.
  */
 async function sendMagicLink(request) {
   if (!hasSupabase) return { ok: false, error: 'Supabase not configured' };
   const redirectTo = `${window.location.origin}/candidate/auth?request_id=${request.id}`;
-  const { error } = await supabase.auth.signInWithOtp({
-    email: request.email,
-    options: {
-      emailRedirectTo: redirectTo,
-      shouldCreateUser: true,
+  const { data, error } = await supabase.functions.invoke('send-magic-link', {
+    body: {
+      email: request.email,
+      redirectTo,
+      requestId: request.id,
+      givenName: request.givenName,
+      familyName: request.familyName,
     },
   });
   if (error) {
-    console.error('[store] signInWithOtp failed:', error);
+    console.error('[store] send-magic-link invoke failed:', error);
     return { ok: false, error: error.message };
+  }
+  if (data && data.error) {
+    console.error('[store] send-magic-link returned error:', data);
+    return { ok: false, error: data.error };
   }
   return { ok: true, error: null };
 }
