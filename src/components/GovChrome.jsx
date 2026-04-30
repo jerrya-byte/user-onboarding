@@ -16,13 +16,14 @@ function GovBar() {
   return (
     <div className="bg-navy-dark px-8 py-1.5 flex items-center gap-2.5">
       <div
+        aria-hidden="true"
         className="w-7 h-7 border-2 border-gold-light rounded-full flex items-center justify-center
                    text-[11px] font-bold text-gold-light tracking-[0.5px]"
       >
         AU
       </div>
       <span className="text-slate1 text-[12px] tracking-[0.3px]">
-        Australian Government &nbsp;|&nbsp; Department of Human Services
+        Australian Government &nbsp;|&nbsp; Department of Superheroes
       </span>
     </div>
   );
@@ -30,11 +31,12 @@ function GovBar() {
 
 function AppHeader({ variant }) {
   return (
-    <div
+    <header
       className="bg-navy px-8 flex items-stretch justify-between border-b-[3px] border-gold-light"
     >
       <div className="flex items-center gap-3.5 py-[18px]">
         <div
+          aria-hidden="true"
           className="w-[38px] h-[38px] bg-gold-light rounded-md flex items-center justify-center
                      font-serif text-lg font-bold text-navy-dark"
         >
@@ -44,15 +46,15 @@ function AppHeader({ variant }) {
           <h1 className="font-serif text-[17px] font-bold text-white tracking-[0.2px]">
             Identity Onboarding Portal
           </h1>
-          <p className="text-[11px] text-slate2 tracking-[0.4px] uppercase">
+          <p className="text-[11px] text-slate1 tracking-[0.4px] uppercase">
             {variant === 'hr'
               ? 'HR Administration System'
-              : 'Department of Human Services — Australian Government'}
+              : 'Department of Superheroes — Australian Government'}
           </p>
         </div>
       </div>
       {variant === 'hr' && <SignedInUser />}
-    </div>
+    </header>
   );
 }
 
@@ -83,22 +85,25 @@ function SignedInUser() {
   return (
     <div className="flex items-center gap-3 py-[18px]">
       <div
-        className="w-8 h-8 rounded-full bg-navy-light border-[1.5px] border-slate2
+        aria-hidden="true"
+        className="w-8 h-8 rounded-full bg-navy-light border-[1.5px] border-slate1
                    flex items-center justify-center text-xs font-semibold text-slate1"
       >
         {initials}
       </div>
       <div className="leading-tight">
-        <div className="text-[13px] text-slate1">{displayName}</div>
-        <div className="text-[11px] text-slate2">{email}</div>
+        <div className="text-[13px] text-white">{displayName}</div>
+        <div className="text-[11px] text-slate1">{email}</div>
       </div>
       <button
         type="button"
         onClick={onSignOut}
-        className="ml-3 text-[11px] uppercase tracking-[0.4px] text-slate2
-                   hover:text-gold-light border border-slate2 hover:border-gold-light
-                   rounded-sm px-2.5 py-1 transition-colors"
-        title="Sign out of Microsoft"
+        aria-label={`Sign out of Microsoft account ${displayName}`}
+        className="ml-3 text-[12px] uppercase tracking-[0.4px] text-white
+                   hover:text-gold-light border border-slate1 hover:border-gold-light
+                   rounded-sm px-3 py-2 transition-colors min-h-[44px]
+                   focus-visible:outline-2 focus-visible:outline-offset-2
+                   focus-visible:outline-gold-light"
       >
         Sign out
       </button>
@@ -119,21 +124,26 @@ function getInitials(name) {
 }
 
 function HRNav() {
+  // Inactive items now use slate1 (#CBD5E1) on navy-light (#243654) — ~9.4:1
+  // (was slate2 ~4.4:1 which failed 4.5:1). Active items keep gold-light.
   const navClass = ({ isActive }) =>
-    `bg-transparent border-0 cursor-pointer py-2.5 px-4 text-[12px] font-semibold
-     tracking-[0.3px] border-b-[3px] whitespace-nowrap transition-colors no-underline ${
+    `bg-transparent border-0 cursor-pointer py-3 px-4 text-[13px] font-semibold
+     tracking-[0.3px] border-b-[3px] whitespace-nowrap transition-colors no-underline
+     min-h-[44px] inline-flex items-center
+     focus-visible:outline-2 focus-visible:outline-offset-[-2px]
+     focus-visible:outline-gold-light ${
        isActive
          ? 'text-gold-light border-gold-light'
-         : 'text-slate2 border-transparent hover:text-slate1'
+         : 'text-slate1 border-transparent hover:text-white'
      }`;
   return (
-    <div className="bg-navy-light px-8 flex gap-0.5 overflow-x-auto">
+    <nav aria-label="HR sections" className="bg-navy-light px-8 flex gap-0.5 overflow-x-auto">
       <NavLink to="/hr/new" className={navClass}>HR · Submit Email</NavLink>
       <NavLink to="/hr/dashboard" className={navClass}>HR · Dashboard</NavLink>
       <NavLink to="/hr/identities" className={navClass}>HR · Identities</NavLink>
       <NavLink to="/hr/termination" className={navClass}>HR · Termination</NavLink>
       <ReissueNavLink />
-    </div>
+    </nav>
   );
 }
 
@@ -144,11 +154,14 @@ function ReissueNavLink() {
     <NavLink
       to="/hr/reissue"
       className={
-        `bg-transparent border-0 cursor-pointer py-2.5 px-4 text-[12px] font-semibold
-         tracking-[0.3px] border-b-[3px] whitespace-nowrap transition-colors no-underline ${
+        `bg-transparent border-0 cursor-pointer py-3 px-4 text-[13px] font-semibold
+         tracking-[0.3px] border-b-[3px] whitespace-nowrap transition-colors no-underline
+         min-h-[44px] inline-flex items-center
+         focus-visible:outline-2 focus-visible:outline-offset-[-2px]
+         focus-visible:outline-gold-light ${
            isActive
              ? 'text-gold-light border-gold-light'
-             : 'text-slate2 border-transparent hover:text-slate1'
+             : 'text-slate1 border-transparent hover:text-white'
          }`
       }
     >

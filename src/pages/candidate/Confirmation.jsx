@@ -39,7 +39,7 @@ export default function Confirmation() {
             {firstName ? `Thank you, ${firstName}` : 'Thank you'}
           </h2>
           <p className="text-base text-ink leading-relaxed max-w-[460px] mx-auto mb-2">
-            Welcome to the Department of Human Services.
+            Welcome to the Department of Superheroes.
           </p>
           <p className="text-sm text-ink-soft max-w-[460px] mx-auto">
             {loading
@@ -66,7 +66,7 @@ export default function Confirmation() {
 
         <div className="text-center pt-5 border-t border-border">
           <div className="text-[11px] text-ink-soft leading-[1.8]">
-            This portal is operated by the Department of Human Services under the{' '}
+            This portal is operated by the Department of Superheroes under the{' '}
             <em>Public Service Act 1999</em>.
             <br />
             Your information is protected under the <em>Privacy Act 1988</em>.

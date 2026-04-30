@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useId, useMemo, useState } from 'react';
 import HRLayout from '../../components/HRLayout';
 import { Breadcrumb, PageHeader } from '../../components/Card';
 import Alert from '../../components/Alert';
@@ -27,6 +27,7 @@ export default function Termination() {
   // and a per-row save state (saving / error / success).
   const [drafts, setDrafts] = useState({}); // { [id]: 'YYYY-MM-DD' }
   const [rowState, setRowState] = useState({}); // { [id]: { saving, error, savedAt } }
+  const searchId = useId();
 
   const minDate = tomorrowYMD();
 
@@ -162,7 +163,7 @@ export default function Termination() {
   };
 
   return (
-    <HRLayout>
+    <HRLayout pageTitle="Set Termination Date">
       <Breadcrumb
         items={[{ label: 'Home', href: '#' }, { label: 'Set Termination Date' }]}
       />
@@ -182,24 +183,31 @@ export default function Termination() {
       <div className="gov-card p-0 overflow-hidden">
         <div className="px-6 py-4 border-b border-border flex items-center gap-3 flex-wrap">
           <SearchIcon />
+          <label htmlFor={searchId} className="sr-only">Search employees by name or email</label>
           <input
+            id={searchId}
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search by name or email…"
-            className="flex-1 min-w-[260px] bg-transparent border-0 outline-none text-[14px] placeholder:text-ink-soft"
+            className="flex-1 min-w-[260px] bg-transparent border border-transparent rounded-sm px-2 py-1 outline-none text-[14px] placeholder:text-ink-soft
+                       focus-visible:border-navy focus-visible:bg-white focus-visible:shadow-[0_0_0_3px_rgba(201,146,42,0.55)]"
             autoFocus
           />
           {query && (
             <button
               type="button"
               onClick={() => setQuery('')}
-              className="text-[11px] uppercase tracking-[0.4px] text-ink-soft hover:text-ink"
+              aria-label="Clear search"
+              className="text-[12px] uppercase tracking-[0.4px] text-navy underline hover:text-navy-dark
+                         px-2 py-2 min-h-[44px] inline-flex items-center
+                         focus-visible:outline-2 focus-visible:outline-offset-2
+                         focus-visible:outline-gold-light"
             >
               Clear
             </button>
           )}
-          <div className="text-[12px] text-ink-soft">
+          <div className="text-[12px] text-ink-soft" aria-live="polite">
             {query.trim() === ''
               ? `${records.length} identities indexed`
               : `${matches.length} match${matches.length === 1 ? '' : 'es'}`}
@@ -256,13 +264,20 @@ export default function Termination() {
 
                 <div className="flex flex-col items-end gap-1.5 max-md:items-stretch">
                   <div className="flex gap-2 items-center max-md:flex-wrap">
+                    <label htmlFor={`term-${rec.id}`} className="sr-only">
+                      Termination date for {rec.givenName} {rec.familyName}
+                    </label>
                     <input
+                      id={`term-${rec.id}`}
                       type="date"
                       value={draft}
                       min={minDate}
                       onChange={(e) => onChangeDraft(rec.id, e.target.value)}
-                      className="border border-border rounded-sm px-3 py-2 text-[13px]
-                                 focus:outline-none focus:border-navy"
+                      aria-invalid={state.error ? 'true' : undefined}
+                      aria-describedby={state.error ? `term-${rec.id}-err` : undefined}
+                      className="border-[1.5px] border-[#767470] rounded-sm px-3 py-2 text-[13px] min-h-[44px]
+                                 focus:outline-none focus:border-navy
+                                 focus-visible:shadow-[0_0_0_3px_rgba(201,146,42,0.55)]"
                     />
                     <button
                       type="button"
@@ -285,12 +300,16 @@ export default function Termination() {
                     )}
                   </div>
                   {state.error && (
-                    <div className="text-[12px] text-red-600 max-w-[320px] text-right max-md:text-left">
+                    <div
+                      id={`term-${rec.id}-err`}
+                      role="alert"
+                      className="text-[12px] text-error font-semibold max-w-[320px] text-right max-md:text-left"
+                    >
                       {state.error}
                     </div>
                   )}
                   {state.savedAt && !state.error && (
-                    <div className="text-[12px] text-green-700 max-md:text-left">
+                    <div role="status" aria-live="polite" className="text-[12px] text-success font-semibold max-md:text-left">
                       Saved.
                     </div>
                   )}

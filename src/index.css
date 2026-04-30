@@ -15,6 +15,10 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* ─── Visually hidden until focused (a11y utility) ───
+   Tailwind 3 ships .sr-only out of the box, so we don't need to redefine
+   it. The .focus:not-sr-only variant is also built in. */
+
 @layer components {
   /* ─── CARD ─── */
   .gov-card {
@@ -34,37 +38,46 @@ body {
   }
   .gov-hint { @apply text-[12px] text-ink-soft mb-1; }
   .gov-input {
-    @apply w-full py-[9px] px-3 border-[1.5px] border-border rounded-[3px]
+    /* Border bumped to #767470 for 3:1 non-text contrast on white (1.4.11). */
+    @apply w-full py-[9px] px-3 border-[1.5px] border-[#767470] rounded-[3px]
            text-sm text-ink bg-surface transition-colors
            focus:outline-none focus:border-navy;
   }
   .gov-input:focus {
-    box-shadow: 0 0 0 3px rgba(27,46,75,0.12);
+    /* Strong, visible focus ring (2.4.7). */
+    box-shadow: 0 0 0 3px rgba(201, 146, 42, 0.55);
   }
   .gov-input.prefilled {
     background: #F7F6F2;
     color: #44443E;
-    border-color: #D4D0C8;
+    border-color: #9E9B92;
   }
   .gov-input.error-border {
     border-color: #8B1A1A;
+    box-shadow: 0 0 0 1px #8B1A1A;
   }
   .gov-prefill-note {
-    @apply text-[11px] text-ink-soft mt-[3px];
+    @apply text-[12px] text-ink-soft mt-[3px];
   }
   .gov-error-msg {
-    @apply text-[11px] text-error mt-[3px];
+    @apply text-[12px] text-error font-semibold mt-[3px];
   }
   .gov-req { @apply text-error ml-0.5; }
   .gov-field-row { @apply grid grid-cols-2 gap-4; }
 
   /* ─── BUTTONS ─── */
+  /* min-height bumped to 44px for touch target compliance (2.5.5). */
   .gov-btn {
-    @apply inline-flex items-center gap-2 px-[22px] py-[10px] rounded-[3px]
+    @apply inline-flex items-center justify-center gap-2 px-[22px] py-[10px] rounded-[3px]
            text-sm font-semibold cursor-pointer border-0 tracking-[0.2px]
-           transition-all;
+           transition-all min-h-[44px];
   }
   .gov-btn:disabled { @apply opacity-50 cursor-not-allowed; }
+  /* Strong focus ring on every button — visible against any background (2.4.7). */
+  .gov-btn:focus-visible {
+    outline: 3px solid #C9922A;
+    outline-offset: 2px;
+  }
   .gov-btn-primary { @apply bg-navy text-white hover:bg-navy-dark; }
   .gov-btn-primary:hover:not(:disabled) {
     box-shadow: 0 2px 6px rgba(0,0,0,0.18);
@@ -77,6 +90,7 @@ body {
   .gov-btn-danger:hover:not(:disabled) { background: #6B1111; }
   .gov-btn-gold { @apply bg-gold-light text-white; }
   .gov-btn-gold:hover:not(:disabled) { @apply bg-gold; }
+  /* Small variant still meets 44x44 via min-height, just tighter horizontal padding. */
   .gov-btn-sm { @apply px-[14px] py-[6px] text-[13px]; }
 
   /* ─── ALERTS ─── */
@@ -95,16 +109,21 @@ body {
     @apply inline-block px-[9px] py-0.5 rounded-[2px] text-[11px] font-bold
            tracking-[0.4px] uppercase;
   }
-  .gov-tag-pending  { @apply bg-warn-bg text-warn border border-[#E8C97A]; }
-  .gov-tag-complete { @apply bg-success-bg text-success border border-[#8ECBA8]; }
-  .gov-tag-expired  { @apply bg-error-bg text-error border border-[#E8AAAA]; }
-  .gov-tag-sent     { @apply bg-tagblue-bg text-tagblue border border-[#A8BBDC]; }
+  .gov-tag-pending  { @apply bg-warn-bg text-warn border border-[#7A5010]; }
+  .gov-tag-complete { @apply bg-success-bg text-success border border-[#1A5E42]; }
+  .gov-tag-expired  { @apply bg-error-bg text-error border border-[#8B1A1A]; }
+  .gov-tag-sent     { @apply bg-tagblue-bg text-tagblue border border-[#1C4080]; }
 
   /* ─── BREADCRUMB ─── */
   .gov-breadcrumb {
     @apply text-[12px] text-ink-soft mb-4 flex gap-1.5 items-center flex-wrap;
   }
   .gov-breadcrumb a { @apply text-teal no-underline hover:underline; }
+  .gov-breadcrumb a:focus-visible {
+    outline: 2px solid #C9922A;
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
   .gov-breadcrumb span.sep { @apply text-border-dark; }
 
   /* ─── PAGE HEADER ─── */
@@ -168,4 +187,14 @@ body {
            flex items-center justify-center shrink-0 mt-px;
   }
   .gov-step-text { @apply text-[13px] text-ink-mid; }
+}
+
+/* ─── Reduced-motion support ─── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

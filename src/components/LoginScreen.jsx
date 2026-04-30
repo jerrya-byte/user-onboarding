@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useMsal } from '@azure/msal-react';
 import GovChrome from './GovChrome';
+import SkipLink from './SkipLink';
 import Alert from './Alert';
 import { LOGIN_REQUEST } from '../lib/msal';
 
@@ -8,6 +9,10 @@ export default function LoginScreen() {
   const { instance, inProgress } = useMsal();
   const [error, setError] = useState('');
   const [signingIn, setSigningIn] = useState(false);
+
+  useEffect(() => {
+    document.title = 'Sign in — Identity Onboarding Portal';
+  }, []);
 
   const onSignIn = async () => {
     setError('');
@@ -33,13 +38,15 @@ export default function LoginScreen() {
 
   return (
     <div className="min-h-screen flex flex-col">
+      <SkipLink />
       <GovChrome variant="login" />
 
-      <div className="flex-1 flex items-center justify-center px-4 py-16">
+      <main id="main-content" tabIndex={-1} className="flex-1 flex items-center justify-center px-4 py-16 focus:outline-none">
         <div className="w-full max-w-[460px]">
           <div className="bg-white border border-border rounded-md shadow-sm px-8 py-10">
             <div className="text-center mb-7">
               <div
+                aria-hidden="true"
                 className="w-[60px] h-[60px] bg-navy rounded-md mx-auto mb-4
                            flex items-center justify-center font-serif text-[22px]
                            font-bold text-gold-light"
@@ -65,18 +72,21 @@ export default function LoginScreen() {
               type="button"
               onClick={onSignIn}
               disabled={busy}
+              aria-busy={busy ? 'true' : undefined}
               className="w-full flex items-center justify-center gap-3 bg-white
-                         border border-[#8C8C8C] hover:border-navy hover:bg-[#F5F7FA]
+                         border border-[#767470] hover:border-navy hover:bg-[#F5F7FA]
                          disabled:opacity-60 disabled:cursor-not-allowed
-                         transition-colors px-4 py-3 rounded-sm
-                         text-[14px] font-semibold text-ink"
+                         transition-colors px-4 py-3 rounded-sm min-h-[44px]
+                         text-[14px] font-semibold text-ink
+                         focus-visible:outline-2 focus-visible:outline-offset-2
+                         focus-visible:outline-gold-light"
             >
               <MicrosoftLogo />
               {busy ? 'Redirecting to Microsoft…' : 'Sign in with Microsoft'}
             </button>
 
             <div className="mt-6 pt-5 border-t border-border text-center">
-              <p className="text-[11px] text-ink-soft leading-relaxed">
+              <p className="text-[12px] text-ink-soft leading-relaxed">
                 Restricted to authorised HR personnel.
                 <br />
                 All sign-in activity is logged for audit purposes.
@@ -84,13 +94,13 @@ export default function LoginScreen() {
             </div>
           </div>
 
-          <p className="text-center text-[11px] text-ink-soft mt-5 leading-[1.7]">
-            This portal is operated by the Department of Human Services
+          <p className="text-center text-[12px] text-ink-soft mt-5 leading-[1.7]">
+            This portal is operated by the Department of Superheroes
             <br />
             under the <em>Public Service Act 1999</em>.
           </p>
         </div>
-      </div>
+      </main>
     </div>
   );
 }
@@ -98,7 +108,7 @@ export default function LoginScreen() {
 function MicrosoftLogo() {
   // Official 4-square Microsoft mark.
   return (
-    <svg width="18" height="18" viewBox="0 0 23 23" aria-hidden="true">
+    <svg width="18" height="18" viewBox="0 0 23 23" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
       <rect x="1" y="1" width="10" height="10" fill="#F25022" />
       <rect x="12" y="1" width="10" height="10" fill="#7FBA00" />
       <rect x="1" y="12" width="10" height="10" fill="#00A4EF" />

@@ -123,7 +123,7 @@ export default function NewRequest() {
   const errVisible = (k) => touched[k] && errors[k];
 
   return (
-    <HRLayout>
+    <HRLayout pageTitle="New Onboarding Request">
       <Breadcrumb
         items={[
           { label: 'Home', href: '#' },
@@ -152,6 +152,8 @@ export default function NewRequest() {
 
       <form
         onSubmit={onSubmit}
+        aria-label="New onboarding request"
+        noValidate
         className="grid grid-cols-[1fr_320px] gap-5 max-lg:grid-cols-1"
       >
         <div>

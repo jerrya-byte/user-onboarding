@@ -57,7 +57,7 @@ export default function ReissueLink() {
 
   if (loading) {
     return (
-      <HRLayout>
+      <HRLayout pageTitle="Reissue Magic Link">
         <Breadcrumb
           items={[
             { label: 'Home', href: '#' },
@@ -72,7 +72,7 @@ export default function ReissueLink() {
 
   if (!req) {
     return (
-      <HRLayout>
+      <HRLayout pageTitle="Reissue Magic Link">
         <Breadcrumb
           items={[
             { label: 'Home', href: '#' },
@@ -116,7 +116,7 @@ export default function ReissueLink() {
   };
 
   return (
-    <HRLayout>
+    <HRLayout pageTitle="Reissue Magic Link">
       <Breadcrumb
         items={[
           { label: 'Home', href: '#' },

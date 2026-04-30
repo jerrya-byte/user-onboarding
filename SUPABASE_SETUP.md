@@ -161,12 +161,12 @@ Supabase will only redirect back to URLs you've whitelisted. This is a security 
 
    **Subject:**
    ```
-   Your DHS Onboarding Invitation
+   Your Department of Superheroes Onboarding Invitation
    ```
 
    **Body (HTML):**
    ```html
-   <h2>Welcome to the Department of Human Services</h2>
+   <h2>Welcome to the Department of Superheroes</h2>
    <p>You have been invited to complete your identity onboarding.</p>
    <p><a href="{{ .ConfirmationURL }}">Click here to begin onboarding</a></p>
    <p>This link will expire in 1 hour and can only be used once.</p>

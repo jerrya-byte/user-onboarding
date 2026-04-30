@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useId, useMemo, useState } from 'react';
 import GovChrome from '../../components/GovChrome';
+import SkipLink from '../../components/SkipLink';
 import { Breadcrumb, PageHeader } from '../../components/Card';
 import Alert from '../../components/Alert';
 import { listIdentityRecords, reissueRequest } from '../../lib/store';
@@ -61,6 +62,11 @@ export default function Identities() {
   const [query, setQuery] = useState('');
   const [feedback, setFeedback] = useState(null); // { kind, text }
   const [reissuingId, setReissuingId] = useState(null);
+  const searchId = useId();
+
+  useEffect(() => {
+    document.title = 'Identities — Identity Onboarding Portal';
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -127,8 +133,9 @@ export default function Identities() {
 
   return (
     <div className="min-h-screen">
+      <SkipLink />
       <GovChrome variant="hr" />
-      <div className="px-8 py-8 max-w-[1400px] mx-auto">
+      <main id="main-content" tabIndex={-1} className="px-8 py-8 max-w-[1400px] mx-auto focus:outline-none">
         <Breadcrumb
           items={[{ label: 'Home', href: '#' }, { label: 'Identities' }]}
         />
@@ -157,36 +164,49 @@ export default function Identities() {
           <div className="px-6 py-4 border-b border-border flex items-center justify-between gap-4 flex-wrap">
             <div className="flex items-center gap-3 flex-1 min-w-[280px]">
               <SearchIcon />
+              <label htmlFor={searchId} className="sr-only">Search identities</label>
               <input
+                id={searchId}
                 type="search"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search by name, email, position, division, manager…"
-                className="flex-1 bg-transparent border-0 outline-none text-[14px] placeholder:text-ink-soft"
+                className="flex-1 bg-transparent border border-transparent rounded-sm px-2 py-1 outline-none text-[14px] placeholder:text-ink-soft
+                           focus-visible:border-navy focus-visible:bg-white focus-visible:shadow-[0_0_0_3px_rgba(201,146,42,0.55)]"
               />
               {query && (
                 <button
                   type="button"
                   onClick={() => setQuery('')}
-                  className="text-[11px] uppercase tracking-[0.4px] text-ink-soft hover:text-ink"
+                  aria-label="Clear search"
+                  className="text-[12px] uppercase tracking-[0.4px] text-navy underline hover:text-navy-dark
+                             px-2 py-2 min-h-[44px] inline-flex items-center
+                             focus-visible:outline-2 focus-visible:outline-offset-2
+                             focus-visible:outline-gold-light"
                 >
                   Clear
                 </button>
               )}
             </div>
-            <div className="text-[12px] text-ink-soft">
+            <div className="text-[12px] text-ink-soft" aria-live="polite">
               Showing <strong>{filtered.length}</strong> of {records.length} identities
             </div>
           </div>
 
           <div className="overflow-x-auto">
             <table className="gov-table whitespace-nowrap">
+              <caption className="sr-only">
+                Identity records — {filtered.length} of {records.length} shown
+              </caption>
               <thead>
                 <tr>
                   {COLUMNS.map((c) => (
-                    <th key={c.key}>{c.label}</th>
+                    <th scope="col" key={c.key}>{c.label}</th>
                   ))}
-                  <th className="sticky right-0 bg-[#F4F6F9] shadow-[-6px_0_8px_-4px_rgba(0,0,0,0.08)]">
+                  <th
+                    scope="col"
+                    className="sticky right-0 bg-navy shadow-[-6px_0_8px_-4px_rgba(0,0,0,0.08)]"
+                  >
                     Action
                   </th>
                 </tr>
@@ -240,7 +260,7 @@ export default function Identities() {
             </table>
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 }

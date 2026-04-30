@@ -58,7 +58,7 @@ Nothing is printed — that's expected.
 1. Open **https://github.com/new** in your browser (log in if needed).
 2. Fill in:
    - **Repository name:** `onboarding-portal` (or any name you like — keep it lowercase, no spaces)
-   - **Description:** `DHS Identity Onboarding Portal — prototype` (optional)
+   - **Description:** `Department of Superheroes Identity Onboarding Portal — prototype` (optional)
    - **Visibility:** select **Private**
    - **Do NOT tick** "Add a README", "Add .gitignore", or "Choose a license". We already have these files locally, and adding them from GitHub will cause a conflict.
 3. Click the green **Create repository** button.

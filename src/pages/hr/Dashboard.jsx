@@ -80,7 +80,7 @@ export default function Dashboard() {
   }, [requests]);
 
   return (
-    <HRLayout>
+    <HRLayout pageTitle="Dashboard">
       <Breadcrumb
         items={[{ label: 'Home', href: '#' }, { label: 'Onboarding Dashboard' }]}
       />
@@ -136,18 +136,26 @@ export default function Dashboard() {
       </div>
 
       <div className="grid grid-cols-[1fr_280px] gap-5 max-lg:grid-cols-1">
-        <div className="gov-card p-0 overflow-hidden">
+        <section className="gov-card p-0 overflow-hidden" aria-labelledby="requests-heading">
+          <h2 id="requests-heading" className="sr-only">Onboarding requests</h2>
           <div className="px-6 pt-4">
-            <div className="flex border-b-2 border-border gap-0 -mb-0.5">
+            <div role="tablist" aria-label="Filter requests" className="flex border-b-2 border-border gap-0 -mb-0.5">
               {TABS.map((t) => (
                 <button
                   key={t.key}
+                  type="button"
+                  role="tab"
+                  aria-selected={tab === t.key}
+                  aria-controls="requests-tabpanel"
                   onClick={() => setTab(t.key)}
-                  className={`bg-transparent border-0 cursor-pointer py-2.5 px-[18px]
-                              text-[13px] font-semibold border-b-2 transition-colors -mb-[2px] ${
+                  className={`bg-transparent border-0 cursor-pointer py-3 px-[18px]
+                              text-[13px] font-semibold border-b-2 transition-colors -mb-[2px]
+                              min-h-[44px]
+                              focus-visible:outline-2 focus-visible:outline-offset-[-2px]
+                              focus-visible:outline-gold-light ${
                     tab === t.key
                       ? 'text-navy border-navy'
-                      : 'text-ink-soft border-transparent hover:text-ink'
+                      : 'text-ink-mid border-transparent hover:text-ink'
                   }`}
                 >
                   {t.label}
@@ -155,16 +163,19 @@ export default function Dashboard() {
               ))}
             </div>
           </div>
-          <div className="overflow-x-auto">
+          <div id="requests-tabpanel" role="tabpanel" className="overflow-x-auto">
             <table className="gov-table">
+              <caption className="sr-only">
+                Onboarding requests — {filtered.length} {tab === 'all' ? 'total' : tab}
+              </caption>
               <thead>
                 <tr>
-                  <th>Candidate</th>
-                  <th>Position</th>
-                  <th>Link Sent</th>
-                  <th>Expiry</th>
-                  <th>Status</th>
-                  <th>Action</th>
+                  <th scope="col">Candidate</th>
+                  <th scope="col">Position</th>
+                  <th scope="col">Link Sent</th>
+                  <th scope="col">Expiry</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -219,7 +230,7 @@ export default function Dashboard() {
               </tbody>
             </table>
           </div>
-        </div>
+        </section>
 
         <Notifications
           items={notifs}

@@ -13,7 +13,7 @@ export default function CandidateChrome({ children }) {
             Identity Onboarding Portal
           </h1>
           <p className="text-[11px] text-slate2">
-            Department of Human Services — Australian Government
+            Department of Superheroes — Australian Government
           </p>
         </div>
       </div>

@@ -464,7 +464,7 @@ function StatutoryFooter() {
   return (
     <div className="mt-6 pt-4 border-t border-border text-center">
       <div className="text-[11px] text-ink-soft leading-[1.8]">
-        This portal is operated by the Department of Human Services under the{' '}
+        This portal is operated by the Department of Superheroes under the{' '}
         <em>Public Service Act 1999</em>.
         <br />
         Your information is protected under the <em>Privacy Act 1988</em>.

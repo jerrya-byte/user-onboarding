@@ -1,6 +1,6 @@
 # Identity Onboarding Portal — Prototype
 
-A working React prototype of the Department of Human Services User Onboarding
+A working React prototype of the Department of Superheroes User Onboarding
 application, based on the HLD, architecture flow, and HTML mockup in the
 project folder.
 
